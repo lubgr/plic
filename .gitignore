@@ -1,0 +1,10 @@
+bin/runtests
+build/*
+misc/output
+.gdb*
+.sconsign.dblite
+config.py
+*.swp
+.tags
+.clang*
+.vimrc

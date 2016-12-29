@@ -1,0 +1,23 @@
+
+- test class for pure .c logging
+
+- check compilation issues with clang++ and update README that both compilers work
+
+- also check older g++ versions
+
+- work on test coverage
+
+- add plic::setDefaultLogger(name) and then save typing when an application always uses the e.g.
+  "eiw4" logger? then, a new set of functions must be there -- and also a new error source [calling
+  these functions but no default logger is configured]
+
+  void debug(const std::string& fmt, ...);
+  ...
+
+- PKGBUILD and makepkg.sh (only in the AUR? there should be a local one to install it for testing,
+  the AUR one can still be an unstable plic-git package because plic isn't stable enough at this
+  point?
+
+- implement variadic template functions
+
+- when merging to v0.2: CHANGELOG

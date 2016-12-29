@@ -1,0 +1,188 @@
+
+from SCons import Errors
+import subprocess
+import time
+import os
+import re
+
+NAME = 'plic'
+LIBNAME = 'lib%s' % NAME
+DEFAULT_PREFIX = '/usr/local'
+DEFAULT_BUILDDIR = './build'
+TEST_EXEC = 'runtests'
+PUBLIC_HEADER = ['plic', 'level', 'stream', 'buildinfo']
+CONFIG_FILE = 'config.py'
+
+def publicHeaderList():
+    def path(header):
+        return os.path.join(env['BUILDDIR'], 'src', header + '.h')
+
+    return  [path(header) for header in PUBLIC_HEADER]
+
+def git(*args):
+    if os.path.isdir('.git'):
+        return subprocess.check_output(['git'] + list(args))
+    else:
+        return ''
+
+def getRepoInfo():
+    branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
+    commit = git('log', '--pretty=format:%h', '-n 1')
+    tag = git('name-rev', '--name-only', '--tags', 'HEAD').strip()
+    stable = tag.startswith('v')
+
+    return branch, commit, stable
+
+def writeBuildInfoHeader(target, source, env):
+    branch, commit, stable = getRepoInfo()
+    timeStr = time.strftime("%H:%M, %a %b %d, %Y", time.localtime())
+    filename = str(target[0])
+    info = []
+
+    if branch and commit:
+        info += [('COMMIT', commit), ('BRANCH', branch)]
+
+        if not stable:
+            info.append(('UNSTABLE', None))
+
+    info += [('CPP_COMPILER', env['CXX'] + ' ' + env['CXXVERSION']),
+            ('CPP_FLAGS', env['CCFLAGS'] + env['CXXFLAGS']), ('PYTHON_VERSION', env['PYVERSION']),
+            ('BUILD_OS', ' '.join(os.uname())), ('BUILD_DATE', timeStr)]
+
+    with open(str(target[0]), 'w') as fp:
+        header = '%s_BUILDINFO_H' % NAME.upper()
+        fp.write('#ifndef %s\n#define %s\n\n' % (header, header))
+
+        for pair in info:
+            line = '#define %s_' % NAME.upper() + pair[0]
+            line += ' "%s"\n' % str(pair[1]) if pair[1] else '\n'
+            fp.write(line)
+
+        fp.write('\n#endif\n')
+
+def buildDir(self, *paths):
+    return os.path.join(self['BUILDDIR'], *paths)
+
+def libExistance(target, source, env):
+    filename = str(env['LIBTARGET'][0])
+    if not os.path.isfile(filename):
+        raise Errors.StopError('%s not found. Compile it before tests or installation.' % filename)
+
+SetOption('num_jobs', 4)
+
+pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
+        + '(sys.version_info.major, sys.version_info.minor, getattr(sys, "abiflags", "")))'
+pyDefaultVersion = subprocess.check_output(['python', '-c', pyVersionCmd])
+
+variables = Variables(CONFIG_FILE)
+variables.AddVariables(
+        ('CXX', 'C++ compiler', Environment()['CXX']),
+        ('CXXFLAGS', 'C++ compiler flags'),
+        ('PYVERSION', 'Python version', pyDefaultVersion),
+        BoolVariable('RELEASE', 'Build with  predefined release flags', 1),
+        BoolVariable('DEBUG', 'Build with predefined debug flags (overrides RELEASE)', 0),
+        BoolVariable('COVERAGE', 'Add compiler flags for test coverage meta data', 0),
+        PathVariable('BUILDDIR', 'Directory for compilation targets', DEFAULT_BUILDDIR,
+            PathVariable.PathIsDirCreate),
+        PathVariable('PREFIX', 'Installation prefix', DEFAULT_PREFIX, PathVariable.PathIsDirCreate),
+        PathVariable('PYINCLUDE', 'Directory with python headers', '', PathVariable.PathAccept),
+        PathVariable('PYLIBRARY', 'Directory with python library', '', PathVariable.PathAccept))
+
+env = Environment(variables = variables)
+
+if variables.unknown:
+    raise Errors.StopError('Variables %s are invalid' % ' '.join(variables.unknown.keys()))
+
+if env['DEBUG']:
+    env['RELEASE'] = False
+
+for key in ('CC', 'CXX', 'CFLAGS', 'CXXFLAGS'):
+    if key in os.environ.keys() and not key in ARGUMENTS.keys():
+        env[key] = os.environ.get(key)
+
+pyIncludeDir = env['PYINCLUDE'] or os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
+pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
+
+env.AddMethod(buildDir)
+env.Append(CPPPATH = [pyIncludeDir])
+env.Append(CXXFLAGS = ['-Wall', '-Wextra', '-Werror=conversion'])
+
+if env['PYVERSION'].startswith('2'):
+    env.Append(CXXFLAGS = ['-Wno-write-strings'])
+
+if env['RELEASE']:
+    env.Append(CPPDEFINES = 'NDEBUG')
+
+if not env['CXXFLAGS']:
+    env.Append(CXXFLAGS = ['-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror=conversion'])
+    if env['RELEASE']:
+        env.Append(CXXFLAGS = '-O2')
+    elif env['DEBUG']:
+        env.Append(CXXFLAGS = ['-O0', '-g3', '-ggdb'])
+
+libEnv = env.Clone()
+testEnv = env.Clone()
+
+libEnv.Replace(BUILDDIR = env.buildDir('src'))
+testEnv.Replace(BUILDDIR = env.buildDir('test'))
+
+libEnv.Append(BUILDERS = {'BuildInfo': Builder(action = writeBuildInfoHeader)})
+libEnv.VariantDir(libEnv.buildDir(), 'src')
+buildInfoHeader = libEnv.BuildInfo(libEnv.buildDir('buildinfo.h'), None)
+
+testEnv.VariantDir(testEnv.buildDir(), 'test')
+testEnv.Append(CPPPATH = libEnv.buildDir())
+testEnv.Append(LIBS = ['plic', 'python%s' % env['PYVERSION'], 'CppUTest'])
+testEnv.Append(RPATH = env.buildDir())
+testEnv.Append(LIBPATH = env.buildDir())
+if env['PYLIBRARY']:
+    testEnv.Append(LIBPATH = [env['PYLIBRARY']])
+
+libTarget = libEnv.SharedLibrary(env.buildDir(LIBNAME), Glob('build/src/*.cpp'))
+
+if libEnv['COVERAGE']:
+    libEnv.Append(CXXFLAGS = ['--coverage'])
+    libEnv.AppendUnique(LIBS = 'gcov')
+    Clean(libTarget, Glob(libEnv.buildDir('*.gcno')) + Glob(libEnv.buildDir('*.gcda')))
+
+testTarget = testEnv.Program(env.buildDir(TEST_EXEC), Glob(testEnv.buildDir('*.cpp')))
+
+# The following lines ensures that library and tests can be built with different CXXFLAGS. Due to
+# the hard-coded removal of the dependency, its local existance has to be checked, otherwise the
+# test executable might be linked against a globally installed version of the library.
+testEnv.Append(LIBTARGET = libTarget)
+testEnv.Ignore(testTarget, testEnv['LIBTARGET'])
+testEnv.AddPreAction(testTarget, libExistance)
+
+includeDir = os.path.join(env['PREFIX'], 'include')
+headerTargetDir = os.path.join(includeDir, NAME)
+libDir = os.path.join(env['PREFIX'], 'lib')
+libPath = os.path.join(libDir, LIBNAME + Environment().subst('$SHLIBSUFFIX'))
+
+installLib = libEnv.InstallAs(libPath, libTarget)
+installHeader = libEnv.Install(headerTargetDir, publicHeaderList())
+
+for target in installHeader:
+    libEnv.AddPostAction(target, Chmod('$TARGET', 0644))
+for target in [headerTargetDir, libDir, includeDir, installLib]:
+    libEnv.AddPostAction(target, Chmod('$TARGET', 0755))
+
+uninstall = libEnv.Command('uninstall', None, Delete(FindInstalledFiles()))
+libEnv.AddPostAction(uninstall, Delete(headerTargetDir))
+
+Default([libTarget, testTarget, buildInfoHeader])
+AlwaysBuild(buildInfoHeader)
+Alias('lib', [libTarget, buildInfoHeader])
+Alias('test', testTarget)
+Alias('install', [installHeader, installLib])
+
+Help("""
+Build targets:\n
+    [none]           shared library and unit tests
+    'lib'            shared library only
+    'test'           unit tests only
+    'install'        install library and headers
+    'uninstall'      deinstall library and headers
+
+Build options, possibly set in %s, or by environment (compiler and their flags):
+%s""" % (CONFIG_FILE, variables.GenerateHelpText(env)), append = False)
