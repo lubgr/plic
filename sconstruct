@@ -100,6 +100,11 @@ for key in ('CC', 'CXX', 'CFLAGS', 'CXXFLAGS'):
     if key in os.environ.keys() and not key in ARGUMENTS.keys():
         env[key] = os.environ.get(key)
 
+# Manual variables must be split into a list (e.g. "-O2 -march=native")
+for key in ('CFLAGS', 'CXXFLAGS'):
+    if isinstance(env[key], str):
+        env[key] = env[key].split()
+
 pyIncludeDir = env['PYINCLUDE'] or os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
 pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
 
