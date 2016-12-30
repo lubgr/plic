@@ -13,11 +13,11 @@ namespace plic {
     Stream error(const std::string& logger = "");
     Stream critical(const std::string& logger = "");
 
-    void debug(const std::string& logger, const std::string& fmt, ...);
-    void info(const std::string& logger, const std::string& fmt, ...);
-    void warning(const std::string& logger, const std::string& fmt, ...);
-    void error(const std::string& logger, const std::string& fmt, ...);
-    void critical(const std::string& logger, const std::string& fmt, ...);
+    void debug(const std::string& logger, const char *fmt, ...);
+    void info(const std::string& logger, const char *fmt, ...);
+    void warning(const std::string& logger, const char *fmt, ...);
+    void error(const std::string& logger, const char *fmt, ...);
+    void critical(const std::string& logger, const char *fmt, ...);
 
     /* If errors occur during configuration, they can't be traced back to specific exceptions.
      * Instead, a message is printed to stderr. */

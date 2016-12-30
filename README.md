@@ -18,8 +18,9 @@ build on all major Linux distributions by
 ```bash
 scons lib
 ```
-Environment variables `CXX` and `CXXFLAGS` are taken into account. The python version is detected
-by the default `python` executable in your $PATH, but can also be specified by
+Environment variables `CXX` and `CXXFLAGS` are taken into account. clang and gcc have been tested,
+their version must be recent enough to support C++11. The python version is detected by the default
+`python` executable in your $PATH, but can also be specified by
 ```bash
 scons lib PYVERSION=3.4m
 ```

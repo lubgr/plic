@@ -17,12 +17,20 @@ namespace {
     {
         std::va_list argsCopy;
         std::string result;
-        int bufferSize;
+        size_t bufferSize;
+        int charsWritten;
         char *buffer;
 
         va_copy(argsCopy, args);
 
-        bufferSize = std::vsnprintf(NULL, 0, fmt, args) + 1;
+        charsWritten = std::vsnprintf(NULL, 0, fmt, args) + 1;
+
+        if (charsWritten < 0) {
+            std::cerr << "Couldn't construct message from format specifier" << std::endl;
+            bufferSize = 10000;
+        } else
+            bufferSize = static_cast<size_t>(charsWritten + 1);
+
         buffer = new char[bufferSize];
 
         std::vsnprintf(buffer, bufferSize, fmt, argsCopy);
@@ -70,27 +78,27 @@ plic::Stream plic::critical(const std::string& logger)
     return Stream(CRITICAL, logger);
 }
 
-void plic::debug(const std::string& logger, const std::string& fmt, ...)
+void plic::debug(const std::string& logger, const char *fmt, ...)
 {
     logWithValist(DEBUG);
 }
 
-void plic::info(const std::string& logger, const std::string& fmt, ...)
+void plic::info(const std::string& logger, const char *fmt, ...)
 {
     logWithValist(INFO);
 }
 
-void plic::warning(const std::string& logger, const std::string& fmt, ...)
+void plic::warning(const std::string& logger, const char *fmt, ...)
 {
     logWithValist(WARNING);
 }
 
-void plic::error(const std::string& logger, const std::string& fmt, ...)
+void plic::error(const std::string& logger, const char *fmt, ...)
 {
     logWithValist(ERROR);
 }
 
-void plic::critical(const std::string& logger, const std::string& fmt, ...)
+void plic::critical(const std::string& logger, const char *fmt, ...)
 {
     logWithValist(CRITICAL);
 }
