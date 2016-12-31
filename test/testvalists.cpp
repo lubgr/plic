@@ -15,6 +15,29 @@ TEST_GROUP(VaLists)
     }
 };
 
+TEST(VaLists, debugMsg)
+{
+    plic::debug("test", "%s %s", "debug", "string");
+
+    CHECK(getLogString().empty());
+}
+
+TEST(VaLists, infoMsg)
+{
+    plic::info("test", "%s %s", "info", "string");
+
+    CHECK(getLogString().empty());
+}
+
+TEST(VaLists, warningMsg)
+{
+    const std::string expected("warning string\n");
+
+    plic::warning("test", "%s %s", "warning", "string");
+
+    CHECK_EQUAL(expected, getLogString());
+}
+
 TEST(VaLists, criticalMsg)
 {
     const std::string expected("one: 1, two: 002, three: +03\n");
