@@ -10,10 +10,9 @@ TEST_GROUP(Config)
     {
         /* Remove all log files generated in ./misc/output: */
         PyRun_SimpleString("import os;import glob;\
-                [os.remove(logFile) for logFile in glob.glob('misc/output' + '/*.log')]");
+                [os.remove(logFile) for logFile in glob.glob('misc/output/*.log')]");
 
         PyRun_SimpleString("import logging;logging.getLogger('test').handlers = []");
-        PyRun_SimpleString("import logging;logging.getLogger('test').setLevel(logging.DEBUG)");
     }
 
     std::string getContent(const std::string& filename)
@@ -39,15 +38,16 @@ TEST_GROUP(Config)
     }
 };
 
-TEST(Config, config01SimpelString)
+TEST(Config, config01SimpleString)
 {
-    const std::string expected("DEBUG:test:" + debugMsg + "\n" + "INFO:test:" + infoMsg + "\n");
+    const std::string expected("DEBUG:root:" + debugMsg + "\n" + "INFO:root:" + infoMsg + "\n");
     plic::configStr("import logging;\
         logging.getLogger().handlers = [];\
         logging.basicConfig(filename = 'misc/output/test01.log', level = logging.DEBUG)");
 
-    plic::debug("test") << debugMsg;
-    plic::info("test") << infoMsg;
+    /* logging.basicConfig() configures the root logger, so don't log to the 'test' logger: */
+    plic::debug() << debugMsg;
+    plic::info() << infoMsg;
 
     CHECK_EQUAL(expected, getContent("misc/output/test01.log"));
 }

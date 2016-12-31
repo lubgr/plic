@@ -28,7 +28,7 @@ TEST(VaLists, errorMsg)
 {
     const std::string expected("error message, 3.1416, 3.142E+00\n");
 
-    plic::critical("test", "%s, %0.4f, %0.3E", "error message", M_PI, M_PI);
+    plic::error("test", "%s, %0.4f, %0.3E", "error message", M_PI, M_PI);
 
     CHECK_EQUAL(expected, getLogString());
 }
