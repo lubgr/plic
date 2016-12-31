@@ -1,6 +1,7 @@
 
 #include <Python.h>
 #include <cassert>
+#include <fstream>
 #include "pybackend.h"
 #include "plictests.h"
 
@@ -98,4 +99,14 @@ void cleanUpLogStream()
 
     testHandler= NULL;
     stream = NULL;
+}
+
+std::string getContent(const std::string& filename)
+{
+    std::ifstream stream(filename);
+    std::stringstream buffer;
+
+    buffer << stream.rdbuf();
+
+    return buffer.str();
 }

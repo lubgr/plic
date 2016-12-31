@@ -1,7 +1,6 @@
 
 #include <Python.h>
 #include <cstdio>
-#include <fstream>
 #include "plictests.h"
 
 TEST_GROUP(Config)
@@ -14,15 +13,6 @@ TEST_GROUP(Config)
 
         PyRun_SimpleString("import logging;logging.getLogger('test').handlers = []");
     }
-
-    std::string getContent(const std::string& filename)
-    {
-        std::ifstream stream(filename);
-        std::stringstream buffer;
-
-        buffer << stream.rdbuf();
-
-        return buffer.str();
     }
 
     bool doesFileExist(const char *filename)
