@@ -23,7 +23,6 @@ namespace plic {
      * Instead, a message is printed to stderr. */
     void configFile(const std::string& pyConfigFilename);
     void configStr(const std::string& pyCommands);
-    void finalize();
 }
 
 extern "C" {
@@ -37,7 +36,6 @@ void plic_critical(const char *logger, const char *fmt, ...);
 
 void plic_configFile(const char *pyConfigFilename);
 void plic_configStr(const char *pyCommands);
-void plic_finalize();
 
 #ifdef __cplusplus
 }

@@ -10,7 +10,6 @@ namespace plic {
 
         int configure(FILE *fp, const std::string& pyConfigFilename);
         int configure(const std::string& pyCommands);
-        void finalize();
     }
 }
 

@@ -66,8 +66,3 @@ int plic::pyBackend::configure(const std::string& pyCommands)
 {
     return PyRun_SimpleString(pyCommands.c_str());
 }
-
-void plic::pyBackend::finalize()
-{
-    Py_Finalize();
-}

@@ -63,8 +63,6 @@ int main(int argc, char **argv)
 
     plic::error("example-logger") << "The << operator is forwarded to a std::stringstream";
 
-    plic::finalize(); /* Undo initializations of the interpreter. */
-
     return 0;
 }
 ```

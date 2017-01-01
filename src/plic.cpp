@@ -127,11 +127,6 @@ void plic::configStr(const std::string& pyCommands)
         std::cerr << "Configuration by python string failed" << std::endl;
 }
 
-void plic::finalize()
-{
-    pyBackend::finalize();
-}
-
 void plic_debug(const char *logger, const char *fmt, ...)
 {
     logWithValist(plic::DEBUG);
@@ -165,9 +160,4 @@ void plic_configFile(const char *pyConfigFilename)
 void plic_configStr(const char *pyCommands)
 {
     plic::configStr(pyCommands);
-}
-
-void plic_finalize()
-{
-    plic::finalize();
 }
