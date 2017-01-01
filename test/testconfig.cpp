@@ -13,7 +13,6 @@ TEST_GROUP(Config)
 
         PyRun_SimpleString("import logging;logging.getLogger('test').handlers = []");
     }
-    }
 
     bool doesFileExist(const char *filename)
     {
