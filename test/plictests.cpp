@@ -56,9 +56,6 @@ std::string getLogString()
     char *msg;
 
     retValue = PyObject_CallMethod(testHandler, "flush", NULL);
-
-    Py_DECREF(retValue);
-
     string = PyObject_CallMethod(stream, "getvalue", NULL);
 
 #if PY_MAJOR_VERSION > 2
