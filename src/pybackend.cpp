@@ -1,5 +1,6 @@
 
 #include <Python.h>
+#include <csignal>
 #include "pybackend.h"
 
 namespace {
@@ -17,13 +18,23 @@ namespace {
         return module;
     }
 
+    void initializePython()
+    {
+        Py_Initialize();
+
+        /* Python implements a signal handler for SIGINT that can cause segmentation faults when
+         * Stream objects call python functions in their destructors. Resetting the SIGINT handler
+         * to its default resolves this problem: */
+        signal(SIGINT, SIG_DFL);
+    }
+
     void initialize()
     {
         PyObject *nullHandler;
         PyObject *rootLogger;
         PyObject *retValue;
 
-        Py_Initialize();
+        initializePython();
 
         rootLogger = PyObject_CallMethod(logging(), "getLogger", NULL);
         nullHandler = PyObject_CallMethod(logging(), "NullHandler", NULL);
