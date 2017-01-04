@@ -14,7 +14,17 @@ const std::string criticalMsg("Critical message");
 static PyObject *testHandler(NULL);
 static PyObject *stream(NULL);
 
+static bool needsInitialization = true;
+
 namespace {
+    void initializeTestSetup()
+    {
+        /* This will initialize the python interpreter and configure logging to its default: */
+        plic::configStr("");
+
+        needsInitialization = false;
+    }
+
     void initTestLogging()
     {
         PyObject *logging(PyImport_ImportModule("logging"));
@@ -34,6 +44,9 @@ namespace {
 
 void setupLogStream()
 {
+    if (needsInitialization)
+        initializeTestSetup();
+
     const char *moduleName = PY_MAJOR_VERSION > 2 ? "io" : "StringIO";
     PyObject *io(PyImport_ImportModule(moduleName));
 

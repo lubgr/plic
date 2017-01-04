@@ -1,6 +1,5 @@
 
 #include <Python.h>
-#include <patchlevel.h>
 #include "pybackend.h"
 
 namespace {
@@ -18,14 +17,13 @@ namespace {
         return module;
     }
 
-    bool initialize()
+    void initialize()
     {
         PyObject *nullHandler;
         PyObject *rootLogger;
         PyObject *retValue;
 
-        if (!Py_IsInitialized())
-            Py_Initialize();
+        Py_Initialize();
 
         rootLogger = PyObject_CallMethod(logging(), "getLogger", NULL);
         nullHandler = PyObject_CallMethod(logging(), "NullHandler", NULL);
@@ -35,34 +33,47 @@ namespace {
         Py_DECREF(rootLogger);
         Py_DECREF(nullHandler);
         Py_DECREF(retValue);
+    }
 
-        return true;
+    void initializeIfNecessary()
+    {
+        if (!Py_IsInitialized())
+            initialize();
+    }
+
+    void logInitialized(plic::Level level, const std::string& loggerName, const std::string& msg)
+    {
+        static const int pyLevels[] = { 10, 20, 30, 40, 50 };
+        const PyObject *text = Py_BuildValue("s", msg.c_str());
+        PyObject *logger;
+        PyObject *result;
+
+        logger = PyObject_CallMethod(logging(), "getLogger", "(s)", loggerName.c_str());
+        result = PyObject_CallMethod(logger, "log", "iO", pyLevels[level], text);
+
+        Py_DECREF(result);
+        Py_DECREF(logger);
+        Py_DECREF(text);
     }
 }
 
-static const bool init = initialize();
-
 void plic::pyBackend::log(Level level, const std::string& loggerName, const std::string& msg)
 {
-    static const int pyLevels[] = { 10, 20, 30, 40, 50 };
-    const PyObject *text = Py_BuildValue("s", msg.c_str());
-    PyObject *logger;
-    PyObject *result;
+    initializeIfNecessary();
 
-    logger = PyObject_CallMethod(logging(), "getLogger", "(s)", loggerName.c_str());
-    result = PyObject_CallMethod(logger, "log", "iO", pyLevels[level], text);
-
-    Py_DECREF(result);
-    Py_DECREF(logger);
-    Py_DECREF(text);
+    logInitialized(level, loggerName, msg);
 }
 
 int plic::pyBackend::configure(FILE *fp, const std::string& pyConfigFilename)
 {
+    initializeIfNecessary();
+
     return PyRun_SimpleFile(fp, pyConfigFilename.c_str());
 }
 
 int plic::pyBackend::configure(const std::string& pyCommands)
 {
+    initializeIfNecessary();
+
     return PyRun_SimpleString(pyCommands.c_str());
 }
