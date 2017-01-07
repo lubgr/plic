@@ -25,7 +25,7 @@ namespace {
         /* Python implements a signal handler for SIGINT that can cause segmentation faults when
          * Stream objects call python functions in their destructors. Resetting the SIGINT handler
          * to its default resolves this problem: */
-        signal(SIGINT, SIG_DFL);
+        PyOS_setsig(SIGINT, SIG_DFL);
     }
 
     void initialize()
