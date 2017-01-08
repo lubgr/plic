@@ -24,7 +24,7 @@ their version must be recent enough to support C++11. The python version is dete
 ```bash
 scons lib PYVERSION=3.4m
 ```
-Python 2.7, 3.4m and 3.5m have been tested. To install header files and the shared library:
+Python 2.7, 3.4m, 3.5m and 3.6m have been tested. To install header files and the shared library:
 ```bash
 scons install PREFIX=/usr/local
 ```
@@ -90,7 +90,10 @@ g++ -o example snippet-from-above.cpp -lplic -lpython
 ```
 Only a few functions from the python API are used, and they seem to be compatible between different
 versions. You should nevertheless link your application against the same python library that has
-been used for compiling plic.
+been used for compiling plic. When [valgrind](http://valgrind.org) shall be used for to debug your
+application, it is best to link against a python library built with
+[--with-valgrind](http://svn.python.org/projects/python/trunk/Misc/README.valgrind) to not clutter
+the output with false positives.
 
 Save some typing
 ----------------
