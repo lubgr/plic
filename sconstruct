@@ -161,14 +161,17 @@ testEnv.AddPreAction(testTarget, libExistance)
 includeDir = os.path.join(env['PREFIX'], 'include')
 headerTargetDir = os.path.join(includeDir, NAME)
 libDir = os.path.join(env['PREFIX'], 'lib')
+shareDir = os.path.join(env['PREFIX'], 'share')
 libPath = os.path.join(libDir, LIBNAME + Environment().subst('$SHLIBSUFFIX'))
+exampleTargetDir = os.path.join(shareDir, NAME)
 
 installLib = libEnv.InstallAs(libPath, libTarget)
 installHeader = libEnv.Install(headerTargetDir, publicHeaderList())
+installExampleConfig = libEnv.Install(exampleTargetDir, Glob('misc/example/*.py'))
 
-for target in installHeader:
+for target in [installHeader, installExampleConfig]:
     libEnv.AddPostAction(target, Chmod('$TARGET', 0644))
-for target in [headerTargetDir, libDir, includeDir, installLib]:
+for target in [headerTargetDir, libDir, includeDir, shareDir, installLib, exampleTargetDir]:
     libEnv.AddPostAction(target, Chmod('$TARGET', 0755))
 
 uninstall = libEnv.Command('uninstall', None, Delete(FindInstalledFiles()))
@@ -178,15 +181,15 @@ Default([libTarget, testTarget, buildInfoHeader])
 AlwaysBuild(buildInfoHeader)
 Alias('lib', [libTarget, buildInfoHeader])
 Alias('test', testTarget)
-Alias('install', [installHeader, installLib])
+Alias('install', [installHeader, installLib, installExampleConfig])
 
 Help("""
 Build targets:\n
     [none]           shared library and unit tests
     'lib'            shared library only
     'test'           unit tests only
-    'install'        install library and headers
-    'uninstall'      deinstall library and headers
+    'install'        install library, headers and example configuration
+    'uninstall'      deinstall library, headers and example configuration
 
 Build options, possibly set in %s, or by environment (compiler and their flags):
 %s""" % (CONFIG_FILE, variables.GenerateHelpText(env)), append = False)

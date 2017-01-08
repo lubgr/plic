@@ -5,9 +5,9 @@ This library provides a convenient way to use the [python logging
 module](https://docs.python.org/3/library/logging.html) from C or C++ applications. Logging can be
 configured with a short python script or a python string, and std::ostream << operators or
 printf-like functions can be used from client code. As all logging functionality is forwarded to the
-CPython implementation, the core of this library is ridiculously small. A simplistic API, the power
-of the python logging module and python itself probably being already installed on your system may
-nevertheless be a reason to use it.
+CPython implementation, the core of this library is quite small. A simplistic API without predefined
+macros, the power of the python logging module and python itself probably being already installed on
+your system may be a reason to use it.
 
 Installation
 ------------
@@ -24,7 +24,8 @@ their version must be recent enough to support C++11. The python version is dete
 ```bash
 scons lib PYVERSION=3.4m
 ```
-Python 2.7, 3.4m, 3.5m and 3.6m have been tested. To install header files and the shared library:
+Python 2.7, 3.4m, 3.5m and 3.6m have been tested. To install header files, the shared library and
+some example configuration:
 ```bash
 scons install PREFIX=/usr/local
 ```
@@ -47,9 +48,10 @@ logger.setLevel(logging.WARNING)
 ```
 By default, logging is disabled, you have to explicitly enable it (see [here]
 (https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library) for a reasoning).
-When configuring logging with the
-[logging.basicConfig](https://docs.python.org/3/library/logging.html#logging.basicConfig) function,
-the default (Null-)Handler must be removed from the root logger before by
+Two example configuration files for printing messages to stdout and for logging to a file are
+provided in `misc/examples` or  after installing in `[PREFIX]/share/plic`. When configuring logging
+with the [logging.basicConfig](https://docs.python.org/3/library/logging.html#logging.basicConfig)
+function, the default (Null-)Handler must be removed from the root logger before by
 `logging.getLogger().handlers = []` in the config script. Now, the C++ client code can refer to the
 config file and use printf-like functions or streams.
 ```c++
