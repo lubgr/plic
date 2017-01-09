@@ -64,7 +64,9 @@ void setupLogStream()
 
 std::string getLogString()
 {
+    std::string logString;
     PyObject *retValue;
+    PyObject* encoded;
     PyObject *string;
     char *msg;
 
@@ -72,19 +74,23 @@ std::string getLogString()
     string = PyObject_CallMethod(stream, "getvalue", NULL);
 
 #if PY_MAJOR_VERSION > 2
-    PyObject* encoded = PyUnicode_AsUTF8String(string);
+    encoded = PyUnicode_AsUTF8String(string);
 
     msg = PyBytes_AsString(encoded);
-
-    Py_DECREF(encoded);
 #else
     msg = PyString_AsString(string);
+#endif
+
+    logString = std::string(msg);
+
+#if PY_MAJOR_VERSION > 2
+    Py_DECREF(encoded);
 #endif
 
     Py_DECREF(retValue);
     Py_DECREF(string);
 
-    return std::string(msg);
+    return logString;
 }
 
 void cleanUpLogStream()
