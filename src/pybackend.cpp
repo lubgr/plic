@@ -60,7 +60,7 @@ namespace {
         PyObject *result;
 
         logger = PyObject_CallMethod(logging(), "getLogger", "(s)", loggerName.c_str());
-        result = PyObject_CallMethod(logger, "log", "iO", pyLevels[level], text);
+        result = PyObject_CallMethod(logger, "log", "(iO)", pyLevels[level], text);
 
         Py_DECREF(result);
         Py_DECREF(logger);
