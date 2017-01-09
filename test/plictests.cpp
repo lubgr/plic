@@ -108,7 +108,6 @@ void cleanUpLogStream()
     retValue = PyObject_CallMethod(testLogger, "removeHandler", "(O)", testHandler);
 
     Py_DECREF(stream);
-    Py_DECREF(testHandler);
     Py_DECREF(testLogger);
     Py_DECREF(logging);
     Py_DECREF(retValue);
