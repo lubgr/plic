@@ -1,5 +1,5 @@
-#ifndef PLIC_PYTHONBACKEND_H
-#define PLIC_PYTHONBACKEND_H
+#ifndef PLIC_PYBACKEND_H
+#define PLIC_PYBACKEND_H
 
 #include <string>
 #include "level.h"
