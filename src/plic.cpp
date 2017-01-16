@@ -6,11 +6,8 @@
 #include "pybackend.h"
 
 /* Save some typing of the va_start/va_end in functions with C-style variable arguments: */
-#define logWithValist(level)\
-    std::va_list argptr;\
-    va_start(argptr, fmt);\
-    log(level, logger, fmt, argptr);\
-    va_end(argptr);
+#define logWithValist(level) std::va_list argptr; va_start(argptr, fmt); \
+    logToPyBackend(level, logger, fmt, argptr); va_end(argptr);
 
 namespace {
     std::string format(const char *fmt, std::va_list args)
@@ -47,10 +44,21 @@ namespace {
         return format(fmt.c_str(), args);
     }
 
-    void log(plic::Level level, const std::string& logger, const std::string& fmt, std::va_list arg)
+    void logToPyBackend(plic::Level level, const std::string& logger, const std::string& fmt,
+            std::va_list args)
     {
-        plic::pyBackend::log(level, logger, format(fmt, arg));
+        plic::pyBackend::log(level, logger, format(fmt, args));
     }
+}
+
+void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string& fmt, ...)
+{
+    std::va_list argptr;
+    va_start(argptr, fmt);
+
+    logToPyBackend(level, logger, fmt, argptr);
+
+    va_end(argptr);
 }
 
 plic::Stream plic::debug(const std::string& logger)
@@ -76,31 +84,6 @@ plic::Stream plic::error(const std::string& logger)
 plic::Stream plic::critical(const std::string& logger)
 {
     return Stream(CRITICAL, logger);
-}
-
-void plic::debug(const std::string& logger, const char *fmt, ...)
-{
-    logWithValist(DEBUG);
-}
-
-void plic::info(const std::string& logger, const char *fmt, ...)
-{
-    logWithValist(INFO);
-}
-
-void plic::warning(const std::string& logger, const char *fmt, ...)
-{
-    logWithValist(WARNING);
-}
-
-void plic::error(const std::string& logger, const char *fmt, ...)
-{
-    logWithValist(ERROR);
-}
-
-void plic::critical(const std::string& logger, const char *fmt, ...)
-{
-    logWithValist(CRITICAL);
 }
 
 void plic::configFile(const std::string& pyConfigFilename)
