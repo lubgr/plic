@@ -51,7 +51,7 @@ namespace {
     }
 }
 
-void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string& fmt, ...)
+void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string fmt, ...)
 {
     std::va_list argptr;
     va_start(argptr, fmt);

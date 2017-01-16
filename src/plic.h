@@ -13,7 +13,7 @@ namespace plic {
     Stream error(const std::string& logger = "");
     Stream critical(const std::string& logger = "");
 
-    void logViaVaLists(Level level, const std::string& logger, const std::string& fmt, ...);
+    void logViaVaLists(Level level, const std::string& logger, const std::string fmt, ...);
 
     template<class S, class ...T> void logViaStream(Level level, const std::string& logger,
             S&& firstArg, T&&... args)
