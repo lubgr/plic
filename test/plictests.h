@@ -13,7 +13,6 @@ std::string getLogString();
 void cleanUpLogStream();
 std::string getContent(const std::string& filename);
 
-
 extern const std::string debugMsg;
 extern const std::string infoMsg;
 extern const std::string warningMsg;
