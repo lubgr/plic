@@ -15,13 +15,13 @@ namespace {
     {
         std::va_list argsCopy;
         std::string result;
-        size_t bufferSize;
+        std::size_t bufferSize;
         int charsWritten;
         char *buffer;
 
         va_copy(argsCopy, args);
 
-        charsWritten = std::vsnprintf(NULL, 0, fmt, args) + 1;
+        charsWritten = std::vsnprintf(NULL, 0, fmt, args);
 
         if (charsWritten < 0) {
             std::cerr << "Couldn't construct message from format specifier" << std::endl;
@@ -116,7 +116,7 @@ plic::Stream plic::critical(const std::string& logger)
 
 void plic::configFile(const std::string& pyConfigFilename)
 {
-    FILE *fp = fopen(pyConfigFilename.c_str(), "r");
+    std::FILE *fp = fopen(pyConfigFilename.c_str(), "r");
     int returnValue = 1;
 
     if (fp == NULL)
