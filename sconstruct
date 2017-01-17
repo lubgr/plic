@@ -192,4 +192,4 @@ Build targets:\n
     'uninstall'      deinstall library, headers and example configuration
 
 Build options, possibly set in %s, or by environment (compiler and their flags):
-%s""" % (CONFIG_FILE, variables.GenerateHelpText(env)), append = False)
+%s""" % (CONFIG_FILE, variables.GenerateHelpText(env)))
