@@ -2,6 +2,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <iostream>
+#include <regex>
 #include "plic.h"
 #include "pybackend.h"
 
@@ -49,6 +50,16 @@ namespace {
     {
         plic::pyBackend::log(level, logger, format(fmt, args));
     }
+
+    bool isFormatStringByParsing(const std::string& fmt)
+    {
+        /* This regex is constructed following the docs for the format parameter of std::printf: */
+        static const std::regex pattern(
+                "%[-+ #0]?[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
+        std::smatch match;
+
+        return std::regex_search(fmt, match, pattern);
+    }
 }
 
 void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string fmt, ...)
@@ -59,6 +70,23 @@ void plic::logViaVaLists(plic::Level level, const std::string& logger, const std
     logToPyBackend(level, logger, fmt, argptr);
 
     va_end(argptr);
+}
+
+bool plic::isFormatString(const std::string fmt, ...)
+{
+    std::va_list argptr;
+    int charsWritten;
+
+    va_start(argptr, fmt);
+
+    charsWritten = std::vsnprintf(NULL, 0, fmt.c_str(), argptr);
+
+    if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten))
+        return true;
+
+    va_end(argptr);
+
+    return isFormatStringByParsing(fmt);
 }
 
 plic::Stream plic::debug(const std::string& logger)

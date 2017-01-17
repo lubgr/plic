@@ -50,3 +50,12 @@ TEST(VariadicArgs, criticalMsgVariadicArgsByDecision)
 
     CHECK_EQUAL(expected, getLogString());
 }
+
+TEST(VariadicArgs, criticalMsgVariadicArgsByParsing)
+{
+    const std::string expected("fmt string with %\n");
+
+    plic::critical("test", "fmt string with %%", 1, 2, 3);
+
+    CHECK_EQUAL(expected, getLogString());
+}
