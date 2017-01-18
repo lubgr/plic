@@ -5,9 +5,9 @@ This library provides a convenient way to use the [python logging
 module](https://docs.python.org/3/library/logging.html) from C or C++ applications. Logging can be
 configured with a short python script or a python string, and std::ostream << operators or
 printf-like functions can be used from client code. As all logging functionality is forwarded to the
-CPython implementation, the core of this library is quite small. A simplistic API without predefined
-macros, the power of the python logging module and python itself probably being already installed on
-your system may be a reason to use it.
+CPython implementation, the core of this library is quite small. A simplistic macro-free API with
+mixed variadic templates and printf-like format strings, the power of the python logging module and
+python itself probably being already installed on your system may be a reason to use it.
 
 Installation
 ------------
@@ -61,9 +61,11 @@ int main(int argc, char **argv)
 {
     plic::configFile("logsetup.py"); /* The file from above. */
 
-    plic::error("example-logger", "Option %d is to use variable argument lists", 1);
+    plic::error("example-logger", "Option %d is to use %s", 1, "printf-like format strings");
 
-    plic::error("example-logger") << "The << operator is forwarded to a std::stringstream";
+    plic::error("example-logger", "Option ", 2, " is to use variadic ", 't', 'e', 'm', "plates");
+
+    plic::error("example-logger") << "Option " << 3 << " is using streams";
 
     return 0;
 }
@@ -72,12 +74,21 @@ The identifier 'example-logger' in the config script and the client code must of
 Available function names for logging are debug/info/warning/error/fatal according to the python log
 levels. Note also that when using streams, a wrapper class is involved that will invoke the python
 backend during its destruction. Thus, you probably don't want static Stream objects, and the easiest
-way of using streams is to rely on temporary objects as shown above.
+way of using streams is to rely on temporary objects as shown above. When you don't feel comfortable
+with the type-unsafe format specifier invocation, disable it by
+```c++
+plic::disablePrintfForwarding(); /* re-enable it with plic::enablePrintfForwarding() */
+```
+If enabled and one of the variadic logging functions is called with a string (literal) as the first
+argument, this string is scanned for [valid format
+specifier](http://en.cppreference.com/w/cpp/io/c/fprintf). If none is found, all arguments are
+transformed into text by std::ostream << operators as when logging to a stream. Otherwise, the
+printf mechanism is used as shown in the example.
 
 Usage from C
 ------------
-The interface for C code differs very little. Streams and the library namespace obviously can't be
-used, instead, there are global functions prefixed with plic\_
+The interface for C code differs very little. Streams, variadic templates and the library namespace
+obviously can't be used, instead, there are global functions prefixed with plic\_
 ```c
 plic_configFile("logsetup.py");
 
@@ -109,4 +120,5 @@ that can be used
 INFO << "We know where this messages was logged";
 ```
 As use and implementation of macros like this are a matter of taste, such shortcuts aren't provided
-by plic, you'll have to define them by your own.
+by plic, you'll have to define them by your own. To this end, you also might want to use [variadic
+macros](https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html).
