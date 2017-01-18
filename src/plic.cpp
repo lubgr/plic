@@ -1,6 +1,7 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cassert>
 #include <iostream>
 #include <regex>
 #include "plic.h"
@@ -69,8 +70,10 @@ namespace {
 
         charsWritten = std::vsnprintf(NULL, 0, fmt.c_str(), args);
 
-        if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten))
+        if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten)) {
+            assert(isFormatStringByParsing(fmt));
             return true;
+        }
 
         return isFormatStringByParsing(fmt);
     }
