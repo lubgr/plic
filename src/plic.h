@@ -14,7 +14,7 @@ namespace plic {
     Stream critical(const std::string& logger = "");
 
     void logViaVaLists(Level level, const std::string& logger, const std::string fmt, ...);
-    bool isFormatString(const std::string fmt, ...);
+    bool doForwardToVaList(const std::string fmt, ...);
 
     template<class S, class ...T> void logViaStream(Level level, const std::string& logger,
             S&& firstArg, T&&... args)
@@ -30,7 +30,7 @@ namespace plic {
     template <typename ...T> void log(Level level, const std::string& logger,
             const std::string& fmt, T&&... args)
     {
-        if (isFormatString(fmt, std::forward<T>(args)...))
+        if (doForwardToVaList(fmt, std::forward<T>(args)...))
             logViaVaLists(level, logger, fmt, std::forward<T>(args)...);
         else
             logViaStream(level, logger, fmt, std::forward<T>(args)...);
@@ -120,6 +120,9 @@ namespace plic {
      * Instead, a message is printed to stderr. */
     void configFile(const std::string& pyConfigFilename);
     void configStr(const std::string& pyCommands);
+
+    void disablePrintfForwarding();
+    void enablePrintfForwarding();
 }
 
 extern "C" {

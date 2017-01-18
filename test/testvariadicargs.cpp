@@ -14,6 +14,19 @@ TEST_GROUP(VariadicArgs)
     }
 };
 
+TEST(VariadicArgs, warningMsgWithoutPrintfForwarding)
+{
+    const std::string expected("warning msg with format %d %s2specifier\n");
+
+    plic::disablePrintfForwarding();
+
+    plic::warning("test", "warning msg with format %d %s", 2, "specifier");
+
+    plic::enablePrintfForwarding();
+
+    CHECK_EQUAL(expected, getLogString());
+}
+
 TEST(VariadicArgs, criticalMsgVariadicArgs)
 {
     const std::string expected("1 2 3 4\n");

@@ -11,6 +11,8 @@
     logToPyBackend(level, logger, fmt, argptr); va_end(argptr);
 
 namespace {
+    bool isPrintfForwardingEnabled = true;
+
     std::string format(const char *fmt, std::va_list args)
     {
         std::va_list argsCopy;
@@ -60,6 +62,18 @@ namespace {
 
         return std::regex_search(fmt, match, pattern);
     }
+
+    bool isFormatString(const std::string& fmt, std::va_list args)
+    {
+        int charsWritten;
+
+        charsWritten = std::vsnprintf(NULL, 0, fmt.c_str(), args);
+
+        if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten))
+            return true;
+
+        return isFormatStringByParsing(fmt);
+    }
 }
 
 void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string fmt, ...)
@@ -72,21 +86,18 @@ void plic::logViaVaLists(plic::Level level, const std::string& logger, const std
     va_end(argptr);
 }
 
-bool plic::isFormatString(const std::string fmt, ...)
+bool plic::doForwardToVaList(const std::string fmt, ...)
 {
     std::va_list argptr;
-    int charsWritten;
+    bool doForward;
 
     va_start(argptr, fmt);
 
-    charsWritten = std::vsnprintf(NULL, 0, fmt.c_str(), argptr);
-
-    if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten))
-        return true;
+    doForward = isPrintfForwardingEnabled && isFormatString(fmt, argptr);
 
     va_end(argptr);
 
-    return isFormatStringByParsing(fmt);
+    return doForward;
 }
 
 plic::Stream plic::debug(const std::string& logger)
@@ -136,6 +147,16 @@ void plic::configStr(const std::string& pyCommands)
 
     if (returnValue != 0)
         std::cerr << "Configuration by python string failed" << std::endl;
+}
+
+void plic::disablePrintfForwarding()
+{
+    isPrintfForwardingEnabled = false;
+}
+
+void plic::enablePrintfForwarding()
+{
+    isPrintfForwardingEnabled = true;
 }
 
 void plic_debug(const char *logger, const char *fmt, ...)
