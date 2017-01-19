@@ -49,7 +49,7 @@ TEST(CInterface, errorMsg)
     CHECK_EQUAL(std::string(msg) + "\n", getLogString());
 }
 
-TEST(CInterface, fatalMsg)
+TEST(CInterface, criticalMsg)
 {
     plic_critical("test.sublogger", criticalMsg.c_str());
 
