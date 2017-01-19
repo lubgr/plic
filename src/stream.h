@@ -8,13 +8,8 @@
 namespace plic {
     class Stream {
         /* Log stream object to be used like std::ostream. The operator << redirects to the
-         * identical operator for std::ostream operands.
-         *
-         * Actual output is generated inside of the destructor. Note that besides the log level, an
-         * identification string can be passed. The latter isn't required, but can be used for
-         * further categorization of log messages. A time stamp is created during the creation of
-         * Stream objects, and maintained constant across assignment and copying, to be used for
-         * temporal meta info given together with a log message. */
+         * identical operator for std::ostream operands. Actual output is generated inside of the
+         * destructor. */
         public:
             Stream(Level level, const std::string& loggerName);
             Stream(const Stream& other);
