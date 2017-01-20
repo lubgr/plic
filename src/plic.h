@@ -4,6 +4,7 @@
 #ifdef __cplusplus
 
 #include "stream.h"
+#include "message.h"
 #include "version.h"
 
 namespace plic {
@@ -13,33 +14,41 @@ namespace plic {
     Stream error(const std::string& logger = "");
     Stream critical(const std::string& logger = "");
 
-    void logViaVaLists(Level level, const std::string& logger, const std::string fmt, ...);
+    void log(const Message& msg);
     bool doForwardToVaList(const std::string fmt, ...);
 
-    template<class S, class ...T> void logViaStream(Level level, const std::string& logger,
-            S&& firstArg, T&&... args)
+    template<class S, class ...T> void logViaStream(Message& msg, S&& firstArg, T&&... args)
     {
         using expander = int[];
-        Stream stream(level, logger);
 
-        stream << std::forward<S>(firstArg);
+        msg.append(std::forward<S>(firstArg));
 
-        (void) expander{ (stream << std::forward<T>(args), void(), 0)... };
+        (void) expander{ (msg.append(std::forward<T>(args)), void(), 0)... };
+
+        log(msg);
+    }
+
+    template <typename ...T> void log(Message& msg, const std::string& fmt, T&&... args)
+    {
+        if (doForwardToVaList(fmt, std::forward<T>(args)...)) {
+            msg.variadicAppend(fmt, std::forward<T>(args)...);
+            log(msg);
+        } else
+            logViaStream(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void log(Level level, const std::string& logger,
             const std::string& fmt, T&&... args)
     {
-        if (doForwardToVaList(fmt, std::forward<T>(args)...))
-            logViaVaLists(level, logger, fmt, std::forward<T>(args)...);
-        else
-            logViaStream(level, logger, fmt, std::forward<T>(args)...);
+        log(Message(level, logger), fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void debug(const std::string& logger, const std::string& fmt,
             T&&... args)
     {
-        log(DEBUG, logger, fmt, std::forward<T>(args)...);
+        Message msg(DEBUG, logger);
+
+        log(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void debug(const std::string& logger, const char *fmt, T&&... args)
@@ -49,13 +58,15 @@ namespace plic {
 
     template<class ...T> void debug(const std::string& logger, T&&... args)
     {
-        logViaStream(DEBUG, logger, std::forward<T>(args)...);
+        debug(logger, "", std::forward<T>(args)...);
     }
 
     template <typename ...T> void info(const std::string& logger, const std::string& fmt,
             T&&... args)
     {
-        log(INFO, logger, fmt, std::forward<T>(args)...);
+        Message msg(INFO, logger);
+
+        log(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void info(const std::string& logger, const char *fmt, T&&... args)
@@ -65,13 +76,15 @@ namespace plic {
 
     template<class ...T> void info(const std::string& logger, T&&... args)
     {
-        logViaStream(INFO, logger, std::forward<T>(args)...);
+        info(logger, "", std::forward<T>(args)...);
     }
 
     template <typename ...T> void warning(const std::string& logger, const std::string& fmt,
             T&&... args)
     {
-        log(WARNING, logger, fmt, std::forward<T>(args)...);
+        Message msg(WARNING, logger);
+
+        log(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void warning(const std::string& logger, const char *fmt, T&&... args)
@@ -81,13 +94,15 @@ namespace plic {
 
     template<class ...T> void warning(const std::string& logger, T&&... args)
     {
-        logViaStream(WARNING, logger, std::forward<T>(args)...);
+        warning(logger, "", std::forward<T>(args)...);
     }
 
     template <typename ...T> void error(const std::string& logger, const std::string& fmt,
             T&&... args)
     {
-        log(ERROR, logger, fmt, std::forward<T>(args)...);
+        Message msg(ERROR, logger);
+
+        log(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void error(const std::string& logger, const char *fmt, T&&... args)
@@ -97,13 +112,15 @@ namespace plic {
 
     template<class ...T> void error(const std::string& logger, T&&... args)
     {
-        logViaStream(ERROR, logger, std::forward<T>(args)...);
+        error(logger, "", std::forward<T>(args)...);
     }
 
     template <typename ...T> void critical(const std::string& logger, const std::string& fmt,
             T&&... args)
     {
-        log(CRITICAL, logger, fmt, std::forward<T>(args)...);
+        Message msg(CRITICAL, logger);
+
+        log(msg, fmt, std::forward<T>(args)...);
     }
 
     template <typename ...T> void critical(const std::string& logger, const char *fmt, T&&... args)
@@ -113,7 +130,7 @@ namespace plic {
 
     template<class ...T> void critical(const std::string& logger, T&&... args)
     {
-        logViaStream(CRITICAL, logger, std::forward<T>(args)...);
+        critical(logger, "", std::forward<T>(args)...);
     }
 
     /* If errors occur during configuration, they can't be traced back to specific exceptions.

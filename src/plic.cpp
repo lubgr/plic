@@ -7,52 +7,8 @@
 #include "plic.h"
 #include "pybackend.h"
 
-/* Save some typing of the va_start/va_end in functions with C-style variable arguments: */
-#define logWithValist(level) std::va_list argptr; va_start(argptr, fmt); \
-    logToPyBackend(level, logger, fmt, argptr); va_end(argptr);
-
 namespace {
     bool isPrintfForwardingEnabled = true;
-
-    std::string format(const char *fmt, std::va_list args)
-    {
-        std::va_list argsCopy;
-        std::string result;
-        std::size_t bufferSize;
-        int charsWritten;
-        char *buffer;
-
-        va_copy(argsCopy, args);
-
-        charsWritten = std::vsnprintf(NULL, 0, fmt, args);
-
-        if (charsWritten < 0) {
-            std::cerr << "Couldn't construct message from format specifier" << std::endl;
-            bufferSize = 10000;
-        } else
-            bufferSize = static_cast<size_t>(charsWritten + 1);
-
-        buffer = new char[bufferSize];
-
-        std::vsnprintf(buffer, bufferSize, fmt, argsCopy);
-
-        result = std::string(buffer);
-
-        delete[] buffer;
-
-        return result;
-    }
-
-    std::string format(const std::string& fmt, std::va_list args)
-    {
-        return format(fmt.c_str(), args);
-    }
-
-    void logToPyBackend(plic::Level level, const std::string& logger, const std::string& fmt,
-            std::va_list args)
-    {
-        plic::pyBackend::log(level, logger, format(fmt, args));
-    }
 
     bool isFormatStringByParsing(const std::string& fmt)
     {
@@ -79,14 +35,9 @@ namespace {
     }
 }
 
-void plic::logViaVaLists(plic::Level level, const std::string& logger, const std::string fmt, ...)
+void plic::log(const Message& msg)
 {
-    std::va_list argptr;
-    va_start(argptr, fmt);
-
-    logToPyBackend(level, logger, fmt, argptr);
-
-    va_end(argptr);
+    pyBackend::log(msg);
 }
 
 bool plic::doForwardToVaList(const std::string fmt, ...)
@@ -164,27 +115,67 @@ void plic::enablePrintfForwarding()
 
 void plic_debug(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::DEBUG);
+    plic::Message msg(plic::DEBUG, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_info(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::INFO);
+    plic::Message msg(plic::INFO, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_warning(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::WARNING);
+    plic::Message msg(plic::WARNING, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_error(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::ERROR);
+    plic::Message msg(plic::ERROR, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_critical(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::CRITICAL);
+    plic::Message msg(plic::CRITICAL, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_configFile(const char *pyConfigFilename)
