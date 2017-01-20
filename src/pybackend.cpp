@@ -52,15 +52,15 @@ namespace {
             initialize();
     }
 
-    void logInitialized(plic::Level level, const std::string& loggerName, const std::string& msg)
+    void logInitialized(const plic::Message& message)
     {
         static const int pyLevels[] = { 10, 20, 30, 40, 50 };
-        const PyObject *text = Py_BuildValue("s", msg.c_str());
+        const PyObject *text = Py_BuildValue("s", message.getText().c_str());
         PyObject *logger;
         PyObject *result;
 
-        logger = PyObject_CallMethod(logging(), "getLogger", "(s)", loggerName.c_str());
-        result = PyObject_CallMethod(logger, "log", "(iO)", pyLevels[level], text);
+        logger = PyObject_CallMethod(logging(), "getLogger", "(s)", message.getLogger().c_str());
+        result = PyObject_CallMethod(logger, "log", "(iO)", pyLevels[message.getLevel()], text);
 
         Py_DECREF(result);
         Py_DECREF(logger);
@@ -68,11 +68,11 @@ namespace {
     }
 }
 
-void plic::pyBackend::log(Level level, const std::string& loggerName, const std::string& msg)
+void plic::pyBackend::log(const Message& message)
 {
     initializeIfNecessary();
 
-    logInitialized(level, loggerName, msg);
+    logInitialized(message);
 }
 
 int plic::pyBackend::configure(FILE *fp, const std::string& pyConfigFilename)
