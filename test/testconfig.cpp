@@ -74,7 +74,12 @@ TEST(Config, config03Utf8ConfigFile)
 
 TEST(Config, config04Latin1ConfigFile)
 {
+#if PY_MAJOR_VERSION > 2
+    /* Everything is converted to a unicode representation in python3. */
     const std::string logger("test.test-äüöß");
+#else
+    const std::string logger("test.test-\xe4\xfc\xf6\xdf");
+#endif
     const std::string nonAsciiMsg("Error msg. with ä, ö, ü, ß");
     const std::string expected(logger + " : " + nonAsciiMsg + "\n");
 
