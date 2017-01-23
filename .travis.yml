@@ -2,6 +2,10 @@ language: cpp
 
 os: linux
 
+branches:
+    only:
+        - develop
+
 script:
     - scons
     - ./build/runtests
