@@ -63,11 +63,6 @@ def writeBuildInfoHeader(target, source, env):
 def buildDir(self, *paths):
     return os.path.join(self['BUILDDIR'], *paths)
 
-def libExistance(target, source, env):
-    filename = str(env['LIBTARGET'][0])
-    if not os.path.isfile(filename):
-        raise Errors.StopError('%s not found. Compile it before tests or installation.' % filename)
-
 SetOption('num_jobs', 4)
 
 pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
@@ -150,13 +145,6 @@ if libEnv['COVERAGE']:
     Clean(libTarget, Glob(libEnv.buildDir('*.gcno')) + Glob(libEnv.buildDir('*.gcda')))
 
 testTarget = testEnv.Program(env.buildDir(TEST_EXEC), Glob(testEnv.buildDir('*.cpp')))
-
-# The following lines ensures that library and tests can be built with different CXXFLAGS. Due to
-# the hard-coded removal of the dependency, its local existance has to be checked, otherwise the
-# test executable might be linked against a globally installed version of the library.
-testEnv.Append(LIBTARGET = libTarget)
-testEnv.Ignore(testTarget, testEnv['LIBTARGET'])
-testEnv.AddPreAction(testTarget, libExistance)
 
 includeDir = os.path.join(env['PREFIX'], 'include')
 headerTargetDir = os.path.join(includeDir, NAME)
