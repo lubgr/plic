@@ -2,7 +2,7 @@ language: cpp
 
 os: linux
 dist: trusty
-sudo: false
+sudo: required
 
 branches:
   only:
@@ -16,7 +16,7 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
         env:
-          - CXX=g++-5
+          - COMPILER=g++-5
 
     - compiler: gcc
       addons:
@@ -24,7 +24,7 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-6']
       env:
-        - CXX=g++-6
+        - COMPILER=g++-6
 
     - compiler: clang
       addons:
@@ -32,10 +32,10 @@ matrix:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
           packages: ['clang-3.9']
       env:
-        - CXX=clang++-3.9
+        - COMPILER=clang++-3.9
 
 script:
-  - scons
+  - scons CXX=$COMPILER
   - ./build/runtests
 
 before_install:
