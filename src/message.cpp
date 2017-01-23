@@ -58,7 +58,7 @@ void plic::Message::append(const char *fmt, std::va_list args)
     delete[] buffer;
 }
 
-void plic::Message::variadicAppend(const std::string &fmt, ...)
+void plic::Message::variadicAppend(const std::string fmt, ...)
 {
     std::va_list args;
     va_start(args, fmt);

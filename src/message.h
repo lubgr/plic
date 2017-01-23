@@ -20,7 +20,7 @@ namespace plic {
 
             void append(const std::string& fmt, std::va_list args);
             void append(const char *fmt, std::va_list args);
-            void variadicAppend(const std::string& fmt, ...);
+            void variadicAppend(const std::string fmt, ...);
 
             std::string getText() const;
             const Level& getLevel() const;
