@@ -106,18 +106,21 @@ pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
 env.AddMethod(buildDir)
 env.Append(CPPPATH = [pyIncludeDir])
 
-if env['PYVERSION'].startswith('2'):
-    env.Append(CXXFLAGS = ['-Wno-write-strings'])
-
-if env['RELEASE']:
-    env.Append(CPPDEFINES = 'NDEBUG')
-
 if not env['CXXFLAGS']:
-    env.Append(CXXFLAGS = ['-std=c++11', '-pedantic', '-Wall', '-Wextra', '-Werror=conversion'])
+    env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wextra', '-Werror=conversion'])
+
+    if env['PYVERSION'].startswith('2'):
+        env.Append(CXXFLAGS = ['-Wno-write-strings'])
+    else:
+        env.Append(CXXFLAGS = ['-pedantic'])
+
     if env['RELEASE']:
         env.Append(CXXFLAGS = '-O2')
     elif env['DEBUG']:
         env.Append(CXXFLAGS = ['-O0', '-g3', '-ggdb'])
+
+if env['RELEASE']:
+    env.Append(CPPDEFINES = 'NDEBUG')
 
 libEnv = env.Clone()
 testEnv = env.Clone()
