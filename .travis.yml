@@ -33,7 +33,7 @@ matrix:
           packages: ['clang-3.9', 'libc++-dev', 'libc++abi-dev']
       env:
           - COMPILER=clang++-3.9
-          - CXXFLAGS='-std=c++11 -stdlib=libc++ -O2'
+          - CXXFLAGS='-std=c++11 -stdlib=libc++ -Wno-write-strings -O2'
 
 script:
   - scons CXX=$COMPILER RELEASE=1
