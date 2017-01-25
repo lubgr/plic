@@ -1,6 +1,5 @@
 language: cpp
 
-os: linux
 dist: trusty
 sudo: required
 
@@ -16,7 +15,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
-        env: COMPILER=g++-5
+      env: COMPILER=g++-5
 
     - os: linux
       compiler: gcc
@@ -32,10 +31,12 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
           packages: ['clang-3.9']
-      env: COMPILER=clang++-3.9
+      env:
+          - COMPILER=clang++-3.9
+          - CXXFLAGS='-std=c++11 -O2'
 
 script:
-  - scons CXX=$COMPILER
+  - scons CXX=$COMPILER RELEASE=1
   - ./build/runtests
   - cat build/src/buildinfo.h
 
