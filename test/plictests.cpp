@@ -66,7 +66,6 @@ std::string getLogString()
 {
     std::string logString;
     PyObject *retValue;
-    PyObject* encoded;
     PyObject *string;
     char *msg;
 
@@ -74,7 +73,7 @@ std::string getLogString()
     string = PyObject_CallMethod(stream, "getvalue", NULL);
 
 #if PY_MAJOR_VERSION > 2
-    encoded = PyUnicode_AsUTF8String(string);
+    PyObject *encoded = PyUnicode_AsUTF8String(string);
 
     msg = PyBytes_AsString(encoded);
 #else
