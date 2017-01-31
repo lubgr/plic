@@ -3,7 +3,6 @@ language: cpp
 dist: trusty
 sudo: required
 os: linux
-compiler: gcc
 
 branches:
   only:
@@ -39,6 +38,7 @@ matrix:
       - COMPILER=g++-6 PYVERSION=3.4m
 
 script:
-  - scons CXX=$COMPILER PYVERSION=$PYVERSION
-  - ./build/runtests
+  - scons CXX=$COMPILER PYVERSION=$PYVERSION lib
   - cat build/src/buildinfo.h
+  - scons CXX=$COMPILER PYVERSION=$PYVERSION test
+  - ./build/runtests
