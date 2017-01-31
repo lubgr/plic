@@ -17,6 +17,7 @@ before_install:
   - CC=gcc-6 CXX=g++-6 ./configure --enable-std-cpp11 --prefix=/usr --disable-memory-leak-detection
   - make
   - sudo make install
+  - cd ..
 
 addons:
   apt:
