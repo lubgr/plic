@@ -15,7 +15,9 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
-      env: COMPILER=g++-5
+      env:
+          - COMPILER=g++-5
+          - PYVERSION=2.7
 
     - os: linux
       compiler: gcc
@@ -23,22 +25,15 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-6']
-      env: COMPILER=g++-6
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
-          packages: ['clang-3.9', 'libc++-dev', 'libc++abi-dev']
       env:
-          - COMPILER=clang++-3.9
-          - CXXFLAGS='-std=c++11 -stdlib=libc++ -Wno-write-strings -O2'
+          - COMPILER=g++-6
+          - PYVERSION=2.7
 
 script:
-  - scons CXX=$COMPILER RELEASE=1
+  - scons CXX=$COMPILER PYVERSION=$PYVERSION
   - ./build/runtests
   - cat build/src/buildinfo.h
+  - find /usr -name 'Python.h' -or -iname 'libpython*.so'
 
 before_install:
   - sudo apt-get update -qq
