@@ -1,5 +1,5 @@
 
-# plic: Python Logging in C/C++
+# plic: Python Logging in C/C++ [![Build Status](https://travis-ci.org/lubgr/plic.svg?branch=develop)](https://travis-ci.org/lubgr/plic)
 
 This library provides a convenient way to use the [python logging
 module](https://docs.python.org/3/library/logging.html) from C or C++ applications. Logging can be
