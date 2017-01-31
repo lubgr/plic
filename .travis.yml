@@ -2,7 +2,6 @@ language: cpp
 
 dist: trusty
 sudo: required
-os: linux
 
 branches:
   only:
@@ -12,8 +11,12 @@ git:
     depth: 3
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y libcpputest-dev
+  - wget https://github.com/cpputest/cpputest/releases/download/v3.8/cpputest-3.8.tar.gz
+  - tar xf cpputest-3.8.tar.gz
+  - cd ./cpputest-3.8
+  - CC=gcc-6 CXX=g++-6 ./configure --enable-std-cpp11 --prefix=/usr --disable-memory-leak-detection
+  - make
+  - sudo make install
 
 addons:
   apt:
@@ -25,16 +28,20 @@ addons:
 
 matrix:
   include:
-    - compiler: gcc
+    - os: linux
+      compiler: gcc
       env: COMPILER=g++-5 PYVERSION=2.7
 
-    - compiler: gcc
+    - os: linux
+      compiler: gcc
       env: COMPILER=g++-6 PYVERSION=2.7
 
-    - compiler: gcc
+    - os: linux
+      compiler: gcc
       env: COMPILER=g++-5 PYVERSION=3.4m
 
-    - compiler: gcc
+    - os: linux
+      compiler: gcc
       env: COMPILER=g++-6 PYVERSION=3.4m
 
 script:
