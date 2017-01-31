@@ -25,17 +25,17 @@ addons:
 
 matrix:
   include:
-    - env:
-      - COMPILER=g++-5 PYVERSION=2.7
+    - compiler: gcc
+      env: COMPILER=g++-5 PYVERSION=2.7
 
-    - env:
-      - COMPILER=g++-6 PYVERSION=2.7
+    - compiler: gcc
+      env: COMPILER=g++-6 PYVERSION=2.7
 
-    - env:
-      - COMPILER=g++-5 PYVERSION=3.4m
+    - compiler: gcc
+      env: COMPILER=g++-5 PYVERSION=3.4m
 
-    - env:
-      - COMPILER=g++-6 PYVERSION=3.4m
+    - compiler: gcc
+      env: COMPILER=g++-6 PYVERSION=3.4m
 
 script:
   - scons CXX=$COMPILER PYVERSION=$PYVERSION lib
