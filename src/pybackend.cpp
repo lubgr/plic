@@ -1,6 +1,8 @@
 
 #include <Python.h>
 #include <csignal>
+#include <cstring>
+#include <iostream>
 #include "pybackend.h"
 
 namespace {
@@ -28,6 +30,15 @@ namespace {
         PyOS_setsig(SIGINT, SIG_DFL);
     }
 
+    void checkPythonVersion()
+    {
+        const std::string linkedVersionString(Py_GetVersion(), std::strlen(PY_VERSION));
+
+        if (std::strcmp(PY_VERSION, linkedVersionString.c_str()) != 0)
+            std::cerr << "Plic is built against python " << PY_VERSION << " but linked against "
+                << linkedVersionString << std::endl;
+    }
+
     void initialize()
     {
         PyObject *nullHandler;
@@ -35,6 +46,7 @@ namespace {
         PyObject *retValue;
 
         initializePython();
+        checkPythonVersion();
 
         rootLogger = PyObject_CallMethod(logging(), "getLogger", NULL);
         nullHandler = PyObject_CallMethod(logging(), "NullHandler", NULL);
