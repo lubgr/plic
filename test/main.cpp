@@ -1,6 +1,6 @@
 
-#include <CppUTest/CommandLineTestRunner.h>
 #include "plic.h"
+#include <CppUTest/CommandLineTestRunner.h>
 
 void initConstructOnFirstUse()
 {

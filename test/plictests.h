@@ -5,8 +5,8 @@
  * header of CppUTest and provides common function definitions. */
 
 #include <iostream>
-#include "CppUTest/TestHarness.h"
 #include "plic.h"
+#include "CppUTest/TestHarness.h"
 
 void setupLogStream();
 std::string getLogString();
