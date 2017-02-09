@@ -1,37 +1,25 @@
 
-#include <cstdarg>
-#include <cstdio>
+#include <regex>
 #include <cassert>
 #include <iostream>
-#include <regex>
 #include "plic.h"
 #include "pybackend.h"
 
 namespace {
     bool isPrintfForwardingEnabled = true;
 
-    bool isFormatStringByParsing(const std::string& fmt)
+    std::ptrdiff_t getNumFmtSpecifierByParsing(const std::string& fmt)
     {
         /* This regex is constructed following the docs for the format parameter of std::printf: */
         static const std::regex pattern(
                 "%[-+ #0]?[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
-        std::smatch match;
+        const auto start(std::sregex_iterator(fmt.begin(), fmt.end(), pattern));
+        const auto end = std::sregex_iterator();
+        const std::ptrdiff_t result = std::distance(start, end);
 
-        return std::regex_search(fmt, match, pattern);
-    }
+        assert(result >= 0);
 
-    bool isFormatString(const std::string& fmt, std::va_list args)
-    {
-        int charsWritten;
-
-        charsWritten = std::vsnprintf(NULL, 0, fmt.c_str(), args);
-
-        if (charsWritten >= 0 && fmt.length() != static_cast<std::size_t>(charsWritten)) {
-            assert(isFormatStringByParsing(fmt));
-            return true;
-        }
-
-        return isFormatStringByParsing(fmt);
+        return result;
     }
 }
 
@@ -40,18 +28,17 @@ void plic::log(const Message& msg)
     pyBackend::log(msg);
 }
 
-bool plic::doForwardToVaList(const std::string fmt, ...)
+void plic::shiftArgOrLog(std::ptrdiff_t, const Message& msg)
 {
-    std::va_list argptr;
-    bool doForward;
+    log(msg);
+}
 
-    va_start(argptr, fmt);
-
-    doForward = isPrintfForwardingEnabled && isFormatString(fmt, argptr);
-
-    va_end(argptr);
-
-    return doForward;
+std::ptrdiff_t plic::getNumFmtSpecifier(const std::string& fmt)
+{
+    if (isPrintfForwardingEnabled)
+        return getNumFmtSpecifierByParsing(fmt);
+    else
+        return 0;
 }
 
 plic::Stream plic::debug(const std::string& logger)

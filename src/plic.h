@@ -15,127 +15,100 @@ namespace plic {
     Stream critical(const std::string& logger = "");
 
     void log(const Message& msg);
-    bool doForwardToVaList(const std::string fmt, ...);
+    void shiftArgOrLog(std::ptrdiff_t, const Message& msg);
+    std::ptrdiff_t getNumFmtSpecifier(const std::string& fmt);
 
-    template<class S, class ...T> void logViaStream(Message& msg, const S& firstArg,
-            const T&... args)
+    template<class S, class... T> void log(Message& msg, const S& firstArg, const T&... args)
     {
-        using expander = int[];
-
         msg.append(firstArg);
 
-        (void) expander{ (msg.append(args), void(), 0)... };
-
-        log(msg);
+        log(msg, args...);
     }
 
-    template <typename ...T> void log(Message& msg, const std::string& fmt, const T&... args)
+    template<class... T> void log(Message& msg, const char *fmt, const T&... args)
     {
-        if (doForwardToVaList(fmt, args...)) {
+        std::ptrdiff_t n = getNumFmtSpecifier(fmt);
+
+        if (n > 0)
             msg.variadicAppend(fmt, args...);
-            log(msg);
-        } else
-            logViaStream(msg, fmt, args...);
+        else
+            msg.append(fmt);
+
+        shiftArgOrLog(n, msg, args...);
     }
 
-    template <typename ...T> void log(Level level, const std::string& logger,
-            const std::string& fmt, const T&... args)
+    template<class S, class... T> void shiftArgOrLog(std::ptrdiff_t nLeft, Message& msg,
+            const S& firstArg, const T&... args)
     {
-        log(Message(level, logger), fmt, args...);
+        if (nLeft > 0)
+            shiftArgOrLog(--nLeft, msg, args...);
+        else
+            plic::log(msg, firstArg, args...);
     }
 
-    template <typename ...T> void debug(const std::string& logger, const std::string& fmt,
-            const T&... args)
+    template<class... T> void debug(const std::string& logger, const char *fmt, const T&... args)
     {
-        Message msg(DEBUG, logger);
+        Message msg(plic::DEBUG, logger);
 
         log(msg, fmt, args...);
     }
 
-    template <typename ...T> void debug(const std::string& logger, const char *fmt,
+    template<class S, class... T> void debug(const std::string& logger, const S& firstArg,
             const T&... args)
     {
-        debug(logger, std::string(fmt), args...);
+        debug(logger, "", firstArg, args...);
     }
 
-    template<class ...T> void debug(const std::string& logger, const T&... args)
+    template<class... T> void info(const std::string& logger, const char *fmt, const T&... args)
     {
-        debug(logger, "", args...);
-    }
-
-    template <typename ...T> void info(const std::string& logger, const std::string& fmt,
-            const T&... args)
-    {
-        Message msg(INFO, logger);
+        Message msg(plic::INFO, logger);
 
         log(msg, fmt, args...);
     }
 
-    template <typename ...T> void info(const std::string& logger, const char *fmt, const T&... args)
-    {
-        info(logger, std::string(fmt), args...);
-    }
-
-    template<class ...T> void info(const std::string& logger, const T&... args)
-    {
-        info(logger, "", args...);
-    }
-
-    template <typename ...T> void warning(const std::string& logger, const std::string& fmt,
+    template<class S, class... T> void info(const std::string& logger, const S& firstArg,
             const T&... args)
     {
-        Message msg(WARNING, logger);
+        info(logger, "", firstArg, args...);
+    }
+
+    template<class... T> void warning(const std::string& logger, const char *fmt, const T&... args)
+    {
+        Message msg(plic::WARNING, logger);
 
         log(msg, fmt, args...);
     }
 
-    template <typename ...T> void warning(const std::string& logger, const char *fmt,
+    template<class S, class... T> void warning(const std::string& logger, const S& firstArg,
             const T&... args)
     {
-        warning(logger, std::string(fmt), args...);
+        warning(logger, "", firstArg, args...);
     }
 
-    template<class ...T> void warning(const std::string& logger, const T&... args)
+    template<class... T> void error(const std::string& logger, const char *fmt, const T&... args)
     {
-        warning(logger, "", args...);
-    }
-
-    template <typename ...T> void error(const std::string& logger, const std::string& fmt,
-            const T&... args)
-    {
-        Message msg(ERROR, logger);
+        Message msg(plic::ERROR, logger);
 
         log(msg, fmt, args...);
     }
 
-    template <typename ...T> void error(const std::string& logger, const char *fmt,
+    template<class S, class... T> void error(const std::string& logger, const S& firstArg,
             const T&... args)
     {
-        error(logger, std::string(fmt), args...);
+        error(logger, "", firstArg, args...);
     }
 
-    template<class ...T> void error(const std::string& logger, const T&... args)
+    template<class... T> void critical(const std::string& logger, const char *fmt, const T&... args)
     {
-        error(logger, "", args...);
-    }
-
-    template <typename ...T> void critical(const std::string& logger, const std::string& fmt,
-            const T&... args)
-    {
-        Message msg(CRITICAL, logger);
+        Message msg(plic::CRITICAL, logger);
 
         log(msg, fmt, args...);
     }
 
-    template <typename ...T> void critical(const std::string& logger, const char *fmt,
+    template<class S, class... T> void critical(const std::string& logger, const S& firstArg,
             const T&... args)
     {
-        critical(logger, std::string(fmt), args...);
-    }
-
-    template<class ...T> void critical(const std::string& logger, const T&... args)
-    {
-        critical(logger, "", args...);
+        critical(logger, "", firstArg, args...);
     }
 
     /* If errors occur during configuration, they can't be traced back to specific exceptions.
