@@ -17,120 +17,125 @@ namespace plic {
     void log(const Message& msg);
     bool doForwardToVaList(const std::string fmt, ...);
 
-    template<class S, class ...T> void logViaStream(Message& msg, S&& firstArg, T&&... args)
+    template<class S, class ...T> void logViaStream(Message& msg, const S& firstArg,
+            const T&... args)
     {
         using expander = int[];
 
-        msg.append(std::forward<S>(firstArg));
+        msg.append(firstArg);
 
-        (void) expander{ (msg.append(std::forward<T>(args)), void(), 0)... };
+        (void) expander{ (msg.append(args), void(), 0)... };
 
         log(msg);
     }
 
-    template <typename ...T> void log(Message& msg, const std::string& fmt, T&&... args)
+    template <typename ...T> void log(Message& msg, const std::string& fmt, const T&... args)
     {
-        if (doForwardToVaList(fmt, std::forward<T>(args)...)) {
-            msg.variadicAppend(fmt, std::forward<T>(args)...);
+        if (doForwardToVaList(fmt, args...)) {
+            msg.variadicAppend(fmt, args...);
             log(msg);
         } else
-            logViaStream(msg, fmt, std::forward<T>(args)...);
+            logViaStream(msg, fmt, args...);
     }
 
     template <typename ...T> void log(Level level, const std::string& logger,
-            const std::string& fmt, T&&... args)
+            const std::string& fmt, const T&... args)
     {
-        log(Message(level, logger), fmt, std::forward<T>(args)...);
+        log(Message(level, logger), fmt, args...);
     }
 
     template <typename ...T> void debug(const std::string& logger, const std::string& fmt,
-            T&&... args)
+            const T&... args)
     {
         Message msg(DEBUG, logger);
 
-        log(msg, fmt, std::forward<T>(args)...);
+        log(msg, fmt, args...);
     }
 
-    template <typename ...T> void debug(const std::string& logger, const char *fmt, T&&... args)
+    template <typename ...T> void debug(const std::string& logger, const char *fmt,
+            const T&... args)
     {
-        debug(logger, std::string(fmt), std::forward<T>(args)...);
+        debug(logger, std::string(fmt), args...);
     }
 
-    template<class ...T> void debug(const std::string& logger, T&&... args)
+    template<class ...T> void debug(const std::string& logger, const T&... args)
     {
-        debug(logger, "", std::forward<T>(args)...);
+        debug(logger, "", args...);
     }
 
     template <typename ...T> void info(const std::string& logger, const std::string& fmt,
-            T&&... args)
+            const T&... args)
     {
         Message msg(INFO, logger);
 
-        log(msg, fmt, std::forward<T>(args)...);
+        log(msg, fmt, args...);
     }
 
-    template <typename ...T> void info(const std::string& logger, const char *fmt, T&&... args)
+    template <typename ...T> void info(const std::string& logger, const char *fmt, const T&... args)
     {
-        info(logger, std::string(fmt), std::forward<T>(args)...);
+        info(logger, std::string(fmt), args...);
     }
 
-    template<class ...T> void info(const std::string& logger, T&&... args)
+    template<class ...T> void info(const std::string& logger, const T&... args)
     {
-        info(logger, "", std::forward<T>(args)...);
+        info(logger, "", args...);
     }
 
     template <typename ...T> void warning(const std::string& logger, const std::string& fmt,
-            T&&... args)
+            const T&... args)
     {
         Message msg(WARNING, logger);
 
-        log(msg, fmt, std::forward<T>(args)...);
+        log(msg, fmt, args...);
     }
 
-    template <typename ...T> void warning(const std::string& logger, const char *fmt, T&&... args)
+    template <typename ...T> void warning(const std::string& logger, const char *fmt,
+            const T&... args)
     {
-        warning(logger, std::string(fmt), std::forward<T>(args)...);
+        warning(logger, std::string(fmt), args...);
     }
 
-    template<class ...T> void warning(const std::string& logger, T&&... args)
+    template<class ...T> void warning(const std::string& logger, const T&... args)
     {
-        warning(logger, "", std::forward<T>(args)...);
+        warning(logger, "", args...);
     }
 
     template <typename ...T> void error(const std::string& logger, const std::string& fmt,
-            T&&... args)
+            const T&... args)
     {
         Message msg(ERROR, logger);
 
-        log(msg, fmt, std::forward<T>(args)...);
+        log(msg, fmt, args...);
     }
 
-    template <typename ...T> void error(const std::string& logger, const char *fmt, T&&... args)
+    template <typename ...T> void error(const std::string& logger, const char *fmt,
+            const T&... args)
     {
-        error(logger, std::string(fmt), std::forward<T>(args)...);
+        error(logger, std::string(fmt), args...);
     }
 
-    template<class ...T> void error(const std::string& logger, T&&... args)
+    template<class ...T> void error(const std::string& logger, const T&... args)
     {
-        error(logger, "", std::forward<T>(args)...);
+        error(logger, "", args...);
     }
 
     template <typename ...T> void critical(const std::string& logger, const std::string& fmt,
-            T&&... args)
+            const T&... args)
     {
         Message msg(CRITICAL, logger);
 
-        log(msg, fmt, std::forward<T>(args)...);
+        log(msg, fmt, args...);
     }
 
-    template <typename ...T> void critical(const std::string& logger, const char *fmt, T&&... args)
+    template <typename ...T> void critical(const std::string& logger, const char *fmt,
+            const T&... args)
     {
-        critical(logger, std::string(fmt), std::forward<T>(args)...);
+        critical(logger, std::string(fmt), args...);
     }
 
-    template<class ...T> void critical(const std::string& logger, T&&... args)
+    template<class ...T> void critical(const std::string& logger, const T&... args)
     {
-        critical(logger, "", std::forward<T>(args)...);
+        critical(logger, "", args...);
     }
 
     /* If errors occur during configuration, they can't be traced back to specific exceptions.
