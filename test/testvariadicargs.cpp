@@ -41,7 +41,7 @@ TEST(VariadicArgs, criticalMsgValist)
     const std::string fmt("%05d %+2d %.3f");
     const std::string expected("-0176 +2 2.346\n");
 
-    plic::critical("test",  fmt, -176, 2, 2.3456789);
+    plic::critical("test", fmt.c_str(), -176, 2, 2.3456789);
 
     CHECK_EQUAL(expected, getLogString());
 }
