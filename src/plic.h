@@ -29,10 +29,10 @@ namespace plic {
     {
         std::ptrdiff_t n = getNumFmtSpecifier(fmt);
 
-        if (n > 0)
-            msg.variadicAppend(fmt, args...);
-        else
+        if (n < 0)
             msg.append(fmt);
+        else
+            msg.variadicAppend(fmt, args...);
 
         shiftArgOrLog(n, msg, args...);
     }

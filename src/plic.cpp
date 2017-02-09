@@ -1,6 +1,5 @@
 
 #include <regex>
-#include <cassert>
 #include <iostream>
 #include "plic.h"
 #include "pybackend.h"
@@ -10,16 +9,16 @@ namespace {
 
     std::ptrdiff_t getNumFmtSpecifierByParsing(const std::string& fmt)
     {
+        static const std::regex doublePercent("%%");
         /* This regex is constructed following the docs for the format parameter of std::printf: */
         static const std::regex pattern(
                 "%[-+ #0]*[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
+        const auto startPercent(std::sregex_iterator(fmt.begin(), fmt.end(), doublePercent));
         const auto start(std::sregex_iterator(fmt.begin(), fmt.end(), pattern));
-        const auto end = std::sregex_iterator();
-        const std::ptrdiff_t result = std::distance(start, end);
+        const std::ptrdiff_t nPercentFmtSpecifier = std::distance(startPercent, std::sregex_iterator());
+        const std::ptrdiff_t nFmtSpecifier = std::distance(start, std::sregex_iterator());
 
-        assert(result >= 0);
-
-        return result;
+        return nFmtSpecifier - nPercentFmtSpecifier;
     }
 }
 
@@ -38,7 +37,7 @@ std::ptrdiff_t plic::getNumFmtSpecifier(const std::string& fmt)
     if (isPrintfForwardingEnabled)
         return getNumFmtSpecifierByParsing(fmt);
     else
-        return 0;
+        return -1;
 }
 
 plic::Stream plic::debug(const std::string& logger)

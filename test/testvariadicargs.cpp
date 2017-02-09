@@ -66,9 +66,9 @@ TEST(VariadicArgs, criticalMsgVariadicArgsByDecision)
 
 TEST(VariadicArgs, criticalMsgVariadicArgsByParsing)
 {
-    const std::string expected("fmt string with %\n");
+    const std::string expected("fmt % string % with % 123\n");
 
-    plic::critical("test", "fmt string with %%", 1, 2, 3);
+    plic::critical("test", "fmt %% string %% with %% ", 1, 2, 3);
 
     CHECK_EQUAL(expected, getLogString());
 }
