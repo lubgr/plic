@@ -12,7 +12,7 @@ namespace {
     {
         /* This regex is constructed following the docs for the format parameter of std::printf: */
         static const std::regex pattern(
-                "%[-+ #0]?[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
+                "%[-+ #0]*[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
         const auto start(std::sregex_iterator(fmt.begin(), fmt.end(), pattern));
         const auto end = std::sregex_iterator();
         const std::ptrdiff_t result = std::distance(start, end);
