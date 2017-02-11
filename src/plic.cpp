@@ -4,24 +4,6 @@
 #include "plic.h"
 #include "pybackend.h"
 
-namespace {
-    bool isPrintfForwardingEnabled = true;
-
-    std::ptrdiff_t getNumFmtSpecifierByParsing(const std::string& fmt)
-    {
-        static const std::regex doublePercent("%%");
-        /* This regex is constructed following the docs for the format parameter of std::printf: */
-        static const std::regex pattern(
-                "%[-+ #0]*[0-9*]?(\\.[0-9*])?(h|hh|l|ll|L|z|j|t)?[csdioxXufFeEaAgGnp%]");
-        const auto startPercent(std::sregex_iterator(fmt.begin(), fmt.end(), doublePercent));
-        const auto start(std::sregex_iterator(fmt.begin(), fmt.end(), pattern));
-        const std::ptrdiff_t nPercentFmtSpecifier = std::distance(startPercent, std::sregex_iterator());
-        const std::ptrdiff_t nFmtSpecifier = std::distance(start, std::sregex_iterator());
-
-        return nFmtSpecifier - nPercentFmtSpecifier;
-    }
-}
-
 void plic::log(const Message& msg)
 {
     pyBackend::log(msg);
@@ -30,14 +12,6 @@ void plic::log(const Message& msg)
 void plic::shiftArgOrLog(std::ptrdiff_t, const Message& msg)
 {
     log(msg);
-}
-
-std::ptrdiff_t plic::getNumFmtSpecifier(const std::string& fmt)
-{
-    if (isPrintfForwardingEnabled)
-        return getNumFmtSpecifierByParsing(fmt);
-    else
-        return -1;
 }
 
 plic::Stream plic::debug(const std::string& logger)
@@ -91,12 +65,12 @@ void plic::configStr(const std::string& pyCommands)
 
 void plic::disablePrintfForwarding()
 {
-    isPrintfForwardingEnabled = false;
+    Message::setPrintfForwarding(false);
 }
 
 void plic::enablePrintfForwarding()
 {
-    isPrintfForwardingEnabled = true;
+    Message::setPrintfForwarding(true);
 }
 
 void plic_debug(const char *logger, const char *fmt, ...)

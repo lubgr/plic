@@ -16,7 +16,6 @@ namespace plic {
 
     void log(const Message& msg);
     void shiftArgOrLog(std::ptrdiff_t, const Message& msg);
-    std::ptrdiff_t getNumFmtSpecifier(const std::string& fmt);
 
     template<class S, class... T> void log(Message& msg, const S& firstArg, const T&... args)
     {
@@ -27,12 +26,7 @@ namespace plic {
 
     template<class... T> void log(Message& msg, const char *fmt, const T&... args)
     {
-        std::ptrdiff_t n = getNumFmtSpecifier(fmt);
-
-        if (n < 0)
-            msg.append(fmt);
-        else
-            msg.variadicAppend(fmt, args...);
+        std::ptrdiff_t n = msg.variadicAppend(fmt, args...);
 
         shiftArgOrLog(n, msg, args...);
     }
