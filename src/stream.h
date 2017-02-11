@@ -21,8 +21,6 @@ namespace plic {
                 return *this;
             }
 
-            const Message& getMessage() const;
-
         private:
             Message message;
     };
