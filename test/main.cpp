@@ -4,7 +4,7 @@
 
 void initConstructOnFirstUse()
 {
-    plic::debug("", "no format specifier ", 0);
+    plic::debug("", "no real %% format specifier ", 0);
 }
 
 int main(int argc, char **argv)
