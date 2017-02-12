@@ -91,14 +91,13 @@ if variables.unknown:
 if env['DEBUG']:
     env['RELEASE'] = False
 
-for key in ('CC', 'CXX', 'CFLAGS', 'CXXFLAGS'):
+for key in ('CXX', 'CXXFLAGS'):
     if key in os.environ.keys() and not key in ARGUMENTS.keys():
         env[key] = os.environ.get(key)
 
 # Manual variables must be split into a list (e.g. "-O2 -march=native")
-for key in ('CFLAGS', 'CXXFLAGS'):
-    if isinstance(env[key], str):
-        env[key] = env[key].split()
+if isinstance(env['CXXFLAGS'], str):
+    env[key] = env['CXXFLAGS'].split()
 
 pyIncludeDir = env['PYINCLUDE'] or os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
 pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
