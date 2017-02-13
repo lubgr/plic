@@ -68,3 +68,34 @@ TEST(Message, selfAssignment)
     CHECK_EQUAL(plic::ERROR, msg.getLevel());
     CHECK_EQUAL(logger, msg.getLogger());
 }
+
+TEST(Message, linenumber)
+{
+    const int linenumber = 1234;
+    plic::Message msg(plic::DEBUG, logger);
+
+    msg.append(plic::LINE);
+    msg.append(linenumber);
+
+    CHECK_EQUAL(linenumber, msg.getLineNumber());
+}
+
+TEST(Message, filename)
+{
+    plic::Message msg(plic::DEBUG, logger);
+
+    msg.append(plic::FILENAME);
+    msg.append(__FILE__);
+
+    CHECK_EQUAL(__FILE__, msg.getFilename());
+}
+
+TEST(Message, function)
+{
+    plic::Message msg(plic::DEBUG, logger);
+
+    msg.append(plic::FCT);
+    msg.append(__func__);
+
+    CHECK_EQUAL(__func__, msg.getFunction());
+}

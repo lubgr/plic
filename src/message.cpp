@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <regex>
+#include <cassert>
 #include "message.h"
 
 namespace {
@@ -10,27 +11,41 @@ namespace {
 }
 
 plic::Message::Message(Level level, const std::string& logger) :
+    linenumber(0),
     logger(logger),
-    level(level)
+    level(level),
+    next(NONE)
 {}
 
-plic::Message::Message(const Message& other)
+plic::Message::Message(const Message& other) :
+    filename(other.filename),
+    function(other.function),
+    linenumber(other.linenumber),
+    logger(other.logger),
+    level(other.level),
+    next(other.next)
 {
-    level = other.level;
-    logger = other.logger;
     stream.str(other.stream.str());
 }
 
 const plic::Message& plic::Message::operator = (const Message& rhs)
 {
-    if (this == &rhs)
-        return *this;
+    Message tmp(rhs);
 
-    level = rhs.level;
-    logger = rhs.logger;
-    stream.str(rhs.stream.str());
+    swap(tmp);
 
     return *this;
+}
+
+void plic::Message::swap(Message& other)
+{
+    std::swap(stream, other.stream);
+    std::swap(filename, other.filename);
+    std::swap(function, other.function);
+    std::swap(linenumber, other.linenumber);
+    std::swap(logger, other.logger);
+    std::swap(level, other.level);
+    std::swap(next, other.next);
 }
 
 void plic::Message::append(const char *fmt, std::va_list args)
@@ -66,7 +81,11 @@ std::ptrdiff_t plic::Message::variadicAppend(const char *fmt, ...)
 
     va_start(args, fmt);
 
-    if (areFormatStringsEnabled) {
+    if (next == FILENAME || next == FCT) {
+        setMetaInfo(fmt);
+        nFmtSpecifier = 0;
+    } else if (areFormatStringsEnabled || next == FMT) {
+        next = NONE;
         append(fmt, args);
         nFmtSpecifier = std::strchr(fmt, '%') == NULL ? 0 : getNumFmtSpecifier(fmt);
     } else {
@@ -100,6 +119,48 @@ std::ptrdiff_t plic::Message::count(const std::string& fmt, const std::string& p
     return std::distance(start, std::sregex_iterator());
 }
 
+void plic::Message::append(int number)
+{
+    if (next == LINE)
+        setMetaInfo(number);
+    else
+        stream << number;
+}
+
+void plic::Message::append(const char *str)
+{
+    if (next == FILENAME || next == FCT)
+        setMetaInfo(str);
+    else
+        stream << str;
+}
+
+void plic::Message::append(Token token)
+{
+    next = token;
+}
+
+void plic::Message::setMetaInfo(int linenumber)
+{
+    this->linenumber = linenumber;
+
+    assert(next == LINE);
+
+    next = NONE;
+}
+
+void plic::Message::setMetaInfo(const char *str)
+{
+    assert(next == FILENAME || next == FCT);
+
+    if (next == FILENAME)
+        filename = std::string(str);
+    else if (next == FCT)
+        function = std::string(str);
+
+    next = NONE;
+}
+
 void plic::Message::setFormatStrings(bool value)
 {
     areFormatStringsEnabled = value;
@@ -118,4 +179,19 @@ const plic::Level& plic::Message::getLevel() const
 const std::string& plic::Message::getLogger() const
 {
     return logger;
+}
+
+const std::string& plic::Message::getFilename() const
+{
+    return filename;
+}
+
+const std::string& plic::Message::getFunction() const
+{
+    return function;
+}
+
+int plic::Message::getLineNumber() const
+{
+    return linenumber;
 }

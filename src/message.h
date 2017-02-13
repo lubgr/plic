@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <sstream>
 #include "level.h"
+#include "token.h"
 
 namespace plic {
     class Message {
@@ -12,6 +13,7 @@ namespace plic {
             Message(Level level, const std::string& logger);
             Message(const Message& other);
             const Message& operator = (const Message& rhs);
+            void swap(Message& other);
 
             template<class T> void append(const T& logObject)
             {
@@ -21,20 +23,32 @@ namespace plic {
             void append(const char *fmt, std::va_list args);
             /* Returns the number of format specifier identified by regex parsing: */
             std::ptrdiff_t variadicAppend(const char *fmt, ...);
+            void append(const char *str);
+            void append(int number);
+            void append(Token token);
+            void setMetaInfo(int linenumber);
+            void setMetaInfo(const char *str);
 
             static void setFormatStrings(bool value);
 
             std::string getText() const;
             const Level& getLevel() const;
             const std::string& getLogger() const;
+            const std::string& getFilename() const;
+            const std::string& getFunction() const;
+            int getLineNumber() const;
 
         private:
             std::ptrdiff_t getNumFmtSpecifier(const std::string& fmt) const;
             std::ptrdiff_t count(const std::string& fmt, const std::string& pattern) const;
 
             std::stringstream stream;
+            std::string filename;
+            std::string function;
+            int linenumber;
             std::string logger;
             Level level;
+            Token next;
     };
 }
 
