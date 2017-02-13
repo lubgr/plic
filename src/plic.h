@@ -110,8 +110,8 @@ namespace plic {
     void configFile(const std::string& pyConfigFilename);
     void configStr(const std::string& pyCommands);
 
-    void disablePrintfForwarding();
-    void enablePrintfForwarding();
+    void disableFormatStrings();
+    void enableFormatStrings();
 }
 
 extern "C" {

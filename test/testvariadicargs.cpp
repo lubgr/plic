@@ -31,11 +31,11 @@ TEST(VariadicArgs, warningMsgWithoutPrintfForwarding)
 {
     const std::string expected("warning msg with format %d %s2specifier\n");
 
-    plic::disablePrintfForwarding();
+    plic::disableFormatStrings();
 
     plic::warning("test", "warning msg with format %d %s", 2, "specifier");
 
-    plic::enablePrintfForwarding();
+    plic::enableFormatStrings();
 
     CHECK_EQUAL(expected, getLogString());
 }

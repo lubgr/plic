@@ -22,7 +22,7 @@ namespace plic {
             /* Returns the number of format specifier identified by regex parsing: */
             std::ptrdiff_t variadicAppend(const char *fmt, ...);
 
-            static void setPrintfForwarding(bool value);
+            static void setFormatStrings(bool value);
 
             std::string getText() const;
             const Level& getLevel() const;

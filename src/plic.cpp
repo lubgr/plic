@@ -63,14 +63,14 @@ void plic::configStr(const std::string& pyCommands)
         std::cerr << "Configuration by python string failed" << std::endl;
 }
 
-void plic::disablePrintfForwarding()
+void plic::disableFormatStrings()
 {
-    Message::setPrintfForwarding(false);
+    Message::setFormatStrings(false);
 }
 
-void plic::enablePrintfForwarding()
+void plic::enableFormatStrings()
 {
-    Message::setPrintfForwarding(true);
+    Message::setFormatStrings(true);
 }
 
 void plic_debug(const char *logger, const char *fmt, ...)

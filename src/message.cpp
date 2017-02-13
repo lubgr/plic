@@ -1,11 +1,12 @@
 
 #include <iostream>
 #include <cstdio>
+#include <cstring>
 #include <regex>
 #include "message.h"
 
 namespace {
-    bool isPrintfForwardingEnabled = true;
+    bool areFormatStringsEnabled = true;
 }
 
 plic::Message::Message(Level level, const std::string& logger) :
@@ -65,9 +66,9 @@ std::ptrdiff_t plic::Message::variadicAppend(const char *fmt, ...)
 
     va_start(args, fmt);
 
-    if (isPrintfForwardingEnabled) {
+    if (areFormatStringsEnabled) {
         append(fmt, args);
-        nFmtSpecifier = getNumFmtSpecifier(fmt);
+        nFmtSpecifier = std::strchr(fmt, '%') == NULL ? 0 : getNumFmtSpecifier(fmt);
     } else {
         append(fmt);
         nFmtSpecifier = 0;
@@ -99,9 +100,9 @@ std::ptrdiff_t plic::Message::count(const std::string& fmt, const std::string& p
     return std::distance(start, std::sregex_iterator());
 }
 
-void plic::Message::setPrintfForwarding(bool value)
+void plic::Message::setFormatStrings(bool value)
 {
-    isPrintfForwardingEnabled = value;
+    areFormatStringsEnabled = value;
 }
 
 std::string plic::Message::getText() const
