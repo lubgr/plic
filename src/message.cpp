@@ -135,9 +135,9 @@ void plic::Message::append(const char *str)
         stream << str;
 }
 
-void plic::Message::append(Token token)
+void plic::Message::append(MetaInfo info)
 {
-    next = token;
+    next = info;
 }
 
 void plic::Message::setMetaInfo(int linenumber)

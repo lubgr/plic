@@ -5,7 +5,7 @@
 #include <cstdarg>
 #include <sstream>
 #include "level.h"
-#include "token.h"
+#include "metainfo.h"
 
 namespace plic {
     class Message {
@@ -25,7 +25,7 @@ namespace plic {
             std::ptrdiff_t variadicAppend(const char *fmt, ...);
             void append(const char *str);
             void append(int number);
-            void append(Token token);
+            void append(MetaInfo info);
             void setMetaInfo(int linenumber);
             void setMetaInfo(const char *str);
 
@@ -48,7 +48,7 @@ namespace plic {
             int linenumber;
             std::string logger;
             Level level;
-            Token next;
+            MetaInfo next;
     };
 }
 

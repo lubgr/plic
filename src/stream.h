@@ -4,6 +4,7 @@
 #include <string>
 #include "level.h"
 #include "message.h"
+#include "metainfo.h"
 
 namespace plic {
     class Stream {
@@ -17,6 +18,14 @@ namespace plic {
             template <class T> Stream& operator << (const T& rhs)
             {
                 message.append(rhs);
+
+                return *this;
+            }
+
+            Stream& operator << (const MetaInfo& info)
+            {
+                if (info != FMT)
+                    message.append(info);
 
                 return *this;
             }
