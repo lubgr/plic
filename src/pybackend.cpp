@@ -64,19 +64,67 @@ namespace {
             initialize();
     }
 
-    void logInitialized(const plic::Message& message)
+    PyObject *createLogArgument(const plic::Message& msg)
     {
         static const int pyLevels[] = { 10, 20, 30, 40, 50 };
-        const PyObject *text = Py_BuildValue("s", message.getText().c_str());
+
+        return Py_BuildValue("(is)", pyLevels[msg.getLevel()], msg.getText().c_str());
+    }
+
+    PyObject *createLogKwarg(const plic::Message& msg)
+    {
+        const std::string& filename(msg.getFilename());
+        const std::string& function(msg.getFunction());
+        PyObject *functionName;
+        PyObject *lineNumber;
+        PyObject *fileName;
+        PyObject *metaInfo;
+        PyObject *extra;
+
+        metaInfo = PyDict_New();
+        extra = PyDict_New();
+
+        lineNumber = Py_BuildValue("i", msg.getLineNumber());
+        fileName = filename.empty() ? Py_None : Py_BuildValue("s", filename.c_str());
+        functionName = filename.empty() ? Py_None : Py_BuildValue("s", function.c_str());
+
+        PyDict_SetItemString(metaInfo, "cfilename", fileName);
+        PyDict_SetItemString(metaInfo, "cfuncName", functionName);
+        PyDict_SetItemString(metaInfo, "clineno", lineNumber);
+        PyDict_SetItemString(extra, "extra", metaInfo);
+
+        Py_DECREF(lineNumber);
+        Py_DECREF(metaInfo);
+
+        if (fileName != Py_None)
+            Py_DECREF(fileName);
+
+        if (functionName != Py_None)
+            Py_DECREF(functionName);
+
+        return extra;
+    }
+
+    void logInitialized(const plic::Message& message)
+    {
         PyObject *logger;
         PyObject *result;
+        PyObject *logFct;
+        PyObject *extra;
+        PyObject *args;
 
         logger = PyObject_CallMethod(logging(), "getLogger", "(s)", message.getLogger().c_str());
-        result = PyObject_CallMethod(logger, "log", "(iO)", pyLevels[message.getLevel()], text);
+        logFct = PyObject_GetAttrString(logger, "log");
+        args = createLogArgument(message);
+        extra = createLogKwarg(message);
 
+        result = PyObject_Call(logFct, args, extra);
+
+        Py_DECREF(logFct);
         Py_DECREF(result);
         Py_DECREF(logger);
-        Py_DECREF(text);
+        Py_XDECREF(extra);
+        Py_DECREF(args);
     }
 }
 
