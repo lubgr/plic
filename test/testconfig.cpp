@@ -103,7 +103,19 @@ TEST(Config, config05FileWithSyntaxError)
     cleanUpLogStream();
 }
 
-TEST(Config, config06StringWithSyntaxError)
+TEST(Config, config06MetaInformation)
+{
+    const std::string expected("12345: " + debugMsg + "\n");
+    const char *outputFilename = "misc/output/test06.log";
+
+    plic::configFile("test/config06.py");
+
+    plic::debug("test", plic::LINE, 12345, debugMsg);
+
+    CHECK_EQUAL(expected, getContent(outputFilename));
+}
+
+TEST(Config, config07StringWithSyntaxError)
 {
     setupLogStream();
 
