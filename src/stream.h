@@ -30,6 +30,9 @@ namespace plic {
                 return *this;
             }
 
+            /* For testing only: */
+            const Message& getMessage() const;
+
         private:
             Message message;
     };

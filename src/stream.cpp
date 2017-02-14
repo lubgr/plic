@@ -10,3 +10,8 @@ plic::Stream::~Stream()
 {
     pyBackend::log(message);
 }
+
+const plic::Message& plic::Stream::getMessage() const
+{
+    return message;
+}
