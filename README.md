@@ -3,11 +3,11 @@
 
 This library provides a convenient way to use the [python logging
 module](https://docs.python.org/3/library/logging.html) from C or C++ applications. Logging can be
-configured with a short python script or a python string, and std::ostream << operators or
-printf-like functions can be used from client code. As all logging functionality is forwarded to the
-CPython implementation, the core of this library is quite small. A simplistic macro-free API with
-mixed variadic templates and printf-like format strings, the power of the python logging module and
-python itself probably being already installed on your system may be a reason to use it.
+configured with a short python script or string, and a fancy mix of printf-format strings with
+variadic template parameters or streams can be used from client code. As all logging functionality
+is forwarded to the CPython implementation, the core of this library is small. The simplistic
+macro-free API with, the power of the python logging module and python itself probably being already
+installed on your system may be a reason to use it.
 
 Installation
 ------------
@@ -20,12 +20,9 @@ scons lib
 ```
 Environment variables `CXX` and `CXXFLAGS` are taken into account. clang and gcc have been tested,
 their version must be recent enough to support C++11. The python version is detected by the default
-`python` executable in your $PATH, but can also be specified by
-```bash
-scons lib PYVERSION=3.4m
-```
-Python 2.7, 3.4m, 3.5m and 3.6m have been tested. To install header files, the shared library and
-some example configuration:
+`python` executable in your $PATH, but can also be specified by passing an appropriate option to
+scons (python 2.7, 3.4m, 3.5m and 3.6m have been tested). To install header files, the shared
+library and some example configuration:
 ```bash
 scons install PREFIX=/usr/local
 ```
@@ -46,14 +43,8 @@ logger = logging.getLogger('example-logger')
 logger.addHandler(fileHandler)
 logger.setLevel(logging.WARNING)
 ```
-By default, logging is disabled, you have to explicitly enable it (see [here]
-(https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library) for a reasoning).
-Two example configuration files for printing messages to stdout and for logging to a file are
-provided in `misc/examples` or  after installing in `[PREFIX]/share/plic`. When configuring logging
-with the [logging.basicConfig](https://docs.python.org/3/library/logging.html#logging.basicConfig)
-function, the default (Null-)Handler must be removed from the root logger before by
-`logging.getLogger().handlers = []` in the config script. Now, the C++ client code can refer to the
-config file and use printf-like functions or streams.
+Now, the C++ client code can refer to the config file and use variadic template calls with printf
+format strings or or streams.
 ```c++
 #include "plic/plic.h"
 
@@ -63,7 +54,9 @@ int main(int argc, char **argv)
 
     plic::error("example-logger", "Option %d is to use %s", 1, "printf-like format strings");
 
-    plic::error("example-logger", "Option ", 2, " is to use variadic ", 't', 'e', 'm', "plates");
+    plic::error("example-logger", "... wherever it pleases", " %c%c%c", 'y', 'o', 'u');
+
+    plic::error("example-logger", "Option ", 2, ": pass anything with a << ", 'o', 'p', 'e', "rator");
 
     plic::error("example-logger") << "Option " << 3 << " is using streams";
 
@@ -72,18 +65,13 @@ int main(int argc, char **argv)
 ```
 The identifier 'example-logger' in the config script and the client code must of course match.
 Available function names for logging are debug/info/warning/error/fatal according to the python log
-levels. Note also that when using streams, a wrapper class is involved that will invoke the python
-backend during its destruction. Thus, you probably don't want static Stream objects, and the easiest
-way of using streams is to rely on temporary objects as shown above. When you don't feel comfortable
-with the type-unsafe format specifier invocation, disable it by
+levels. When you don't feel comfortable with the type-unsafe format specifier invocation, disable it
+by
 ```c++
-plic::disablePrintfForwarding(); /* re-enable it with plic::enablePrintfForwarding() */
+plic::disableFormatStrings(); /* re-enable it with plic::enableFormatStrings() */
 ```
-If enabled and one of the variadic logging functions is called with a string (literal) as the first
-argument, this string is scanned for [valid format
-specifier](http://en.cppreference.com/w/cpp/io/c/fprintf). If none is found, all arguments are
-transformed into text by std::ostream << operators as when logging to a stream. Otherwise, the
-printf mechanism is used as shown in the example.
+You can pass meta information like filename, line number and function name for later retrieval by an
+appropriate logging formatter, see below.
 
 Usage from C
 ------------
@@ -103,22 +91,52 @@ g++ -o example snippet-from-above.cpp -lplic -lpython
 ```
 Only a few functions from the python API are used, and they seem to be compatible between different
 versions. You should nevertheless link your application against the same python library that has
-been used for compiling plic. When [valgrind](http://valgrind.org) shall be used for to debug your
-application, it is best to link against a python library built with
-[--with-valgrind](http://svn.python.org/projects/python/trunk/Misc/README.valgrind) to not clutter
-the output with false positives.
+been used for compiling plic.
 
-Save some typing
+Meta information
 ----------------
-In order to use `__FILE__` and `__LINE__` macros  enhance logging information, you can define your
-own macro, e.g.
+It is possible to pass meta information for every log record by three preceding flags,
 ```c++
-#define INFO plic::info("myapplication") << __FILE__ << ":" << __LINE__ << " "
+plic::error("example-logger", plic::FILENAME, __FILE__, plic::LINE, __LINE__, plic::FCT, __func__);
 ```
-that can be used
+They aren't printed by default, but passed to every logging call of the python backend such that
+they can be retrieved by adjusting the formatter,
+```python
+formatter = logging.Formatter('%(cfilename)s: %(clineno)d [%(cfuncName)s] - %(message)s')
+```
+You probably don't want to type that for every logging call, so define your own [variadic
+macros](https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html), e.g.
 ```c++
-INFO << "We know where this messages was logged";
+#define INFO(...) plic::info("myapp", plic::FILENAME, __FILE__, plic::LINE, __LINE__, __VA_ARGS__)
+```
+that can then be invoked by
+```c++
+INFO("We can output where this messages was logged");
 ```
 As use and implementation of macros like this are a matter of taste, such shortcuts aren't provided
-by plic, you'll have to define them by your own. To this end, you also might want to use [variadic
-macros](https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html).
+by plic, you'll have to define them by your own.
+
+Additional notes
+-------------
+* By default, logging is disabled, you have to explicitly enable it (see [here]
+  (https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library) for a reasoning).
+* Two example configuration files for printing messages to stdout and for logging to a file are
+  provided in `misc/examples` or  after installing in `[PREFIX]/share/plic`.
+* When configuring logging with the
+  [logging.basicConfig](https://docs.python.org/3/library/logging.html#logging.basicConfig)
+  function, the default (Null-)Handler must be removed from the root logger before by
+  `logging.getLogger().handlers = []` in the config script.
+* When using streams from C++, a wrapper class is involved that will invoke the python backend
+  during its destruction. Thus, you probably don't want static Stream objects, and the easiest way
+  of using streams is to rely on temporary objects as shown above.
+* Format specifier work only with string literals, not with std::string or std::wchar_t or any other
+  type. If a '%' is found in the string literal, a regex is used to parse the string for [valid
+  format specifier](http://en.cppreference.com/w/cpp/io/c/fprintf). If none is found, all arguments
+  are transformed into text by std::ostream << operators as when logging to a stream.
+* If you don't want every string literal to be parsed for format specifier, disable it by
+  ```plic::diasableFormatStrings()``` and then add the plic::FMT token before every format string
+  that you actively want to be parsed.
+* When [valgrind](http://valgrind.org) shall be used for to debug your application, it is best to
+  link against a python library built with
+  [--with-valgrind](http://svn.python.org/projects/python/trunk/Misc/README.valgrind) to not clutter
+  the output with false positives.
