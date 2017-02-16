@@ -8,11 +8,11 @@
 #include "version.h"
 
 namespace plic {
-    Stream debug(const std::string& logger = "");
-    Stream info(const std::string& logger = "");
-    Stream warning(const std::string& logger = "");
-    Stream error(const std::string& logger = "");
-    Stream critical(const std::string& logger = "");
+    Stream debug(const std::string& logger);
+    Stream info(const std::string& logger);
+    Stream warning(const std::string& logger);
+    Stream error(const std::string& logger);
+    Stream critical(const std::string& logger);
 
     void log(const Message& msg);
     void shiftArgOrLog(std::ptrdiff_t, const Message& msg);

@@ -33,8 +33,8 @@ TEST(Config, config01SimpleString)
         logging.basicConfig(filename = 'misc/output/test01.log', level = logging.DEBUG)");
 
     /* logging.basicConfig() configures the root logger, so don't log to the 'test' logger: */
-    plic::debug() << debugMsg;
-    plic::info() << infoMsg;
+    plic::debug("") << debugMsg;
+    plic::info("") << infoMsg;
 
     CHECK_EQUAL(expected, getContent("misc/output/test01.log"));
 }
@@ -94,7 +94,7 @@ TEST(Config, config05FileWithSyntaxError)
 
     plic::configFile("test/config05.py");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 
@@ -119,7 +119,7 @@ TEST(Config, config07StringWithSyntaxError)
 
     plic::configStr("&&& intended invalid syntax");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 
@@ -132,7 +132,7 @@ TEST(Config, nonExistingFile)
 
     plic::configFile("test/nonexisting.py");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 
