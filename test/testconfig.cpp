@@ -10,8 +10,6 @@ TEST_GROUP(Config)
         /* Remove all log files generated in ./misc/output: */
         PyRun_SimpleString("import os;import glob;\
                 [os.remove(logFile) for logFile in glob.glob('misc/output/*.log')]");
-
-        PyRun_SimpleString("import logging;logging.getLogger('test').handlers = []");
     }
 
     bool doesFileExist(const char *filename)
