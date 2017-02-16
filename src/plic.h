@@ -14,6 +14,7 @@ namespace plic {
     Stream error(const std::string& logger);
     Stream critical(const std::string& logger);
 
+#if __cplusplus >= 201103L
     void log(const Message& msg);
     void shiftArgOrLog(std::ptrdiff_t, const Message& msg);
 
@@ -104,6 +105,7 @@ namespace plic {
     {
         critical(logger, "", firstArg, args...);
     }
+#endif
 
     /* If errors occur during configuration, they can't be traced back to specific exceptions.
      * Instead, a message is printed to stderr. */

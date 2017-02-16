@@ -1,4 +1,5 @@
 
+#include <cmath>
 #include "plictests.h"
 
 namespace {
@@ -26,6 +27,47 @@ TEST_GROUP(VariadicArgs)
         cleanUpLogStream();
     }
 };
+
+TEST(VariadicArgs, simpleDebugMsg)
+{
+    plic::debug("test", "%s %s", "debug", "string");
+
+    CHECK(getLogString().empty());
+}
+
+TEST(VariadicArgs, simpleInfoMsg)
+{
+    plic::info("test", "%s %s", "info", "string");
+
+    CHECK(getLogString().empty());
+}
+
+TEST(VariadicArgs, simpleWarningMsg)
+{
+    const std::string expected("warning string\n");
+
+    plic::warning("test", "%s %s", "warning", "string");
+
+    CHECK_EQUAL(expected, getLogString());
+}
+
+TEST(VariadicArgs, simpleCriticalMsg)
+{
+    const std::string expected("one: 1, two: 002, three: +03\n");
+
+    plic::critical("test", "one: %d, two: %03d, three: %+03d", 1, 2, 3);
+
+    CHECK_EQUAL(expected, getLogString());
+}
+
+TEST(VariadicArgs, simpleErrorMsg)
+{
+    const std::string expected("error message, 3.1416, 3.142E+00\n");
+
+    plic::error("test", "%s, %0.4f, %0.3E", "error message", M_PI, M_PI);
+
+    CHECK_EQUAL(expected, getLogString());
+}
 
 TEST(VariadicArgs, warningMsgWithoutPrintfForwarding)
 {
