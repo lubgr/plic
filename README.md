@@ -129,6 +129,8 @@ Additional notes
 * When using streams from C++, a wrapper class is involved that will invoke the python backend
   during its destruction. Thus, you probably don't want static Stream objects, and the easiest way
   of using streams is to rely on temporary objects as shown above.
+* With older compilers, features that came with C++11 or above may not be available. In that case,
+  logging via streams is the only option (variadic template functions aren't defined).
 * Format specifier work only with string literals, not with std::string or std::wchar_t or any other
   type. If a '%' is found in the string literal, a regex is used to parse the string for [valid
   format specifier](http://en.cppreference.com/w/cpp/io/c/fprintf). If none is found, all arguments
