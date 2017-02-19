@@ -63,47 +63,85 @@ def writeBuildInfoHeader(target, source, env):
 def buildDir(self, *paths):
     return os.path.join(self['BUILDDIR'], *paths)
 
-SetOption('num_jobs', 4)
+def concat(self, *keys):
+    strRep = ''
 
-pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
-        + '(sys.version_info.major, sys.version_info.minor, getattr(sys, "abiflags", "")))'
-pyDefaultVersion = subprocess.check_output(['python', '-c', pyVersionCmd])
+    for key in keys:
+        if key in self.Dictionary():
+            entry = self[key]
+            if isinstance(entry, list):
+                entry = ' '.join(entry)
+
+            strRep += '%s ' % entry
+
+    return strRep[:-1]
+
+def getPyVersionByExec():
+    pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
+            + '(sys.version_info.major, sys.version_info.minor, getattr(sys, "abiflags", "")))'
+    return subprocess.check_output(['python', '-c', pyVersionCmd])
+
+def getPyVersion(env):
+    pyVersion = env.concat('PYVERSION')
+    if pyVersion:
+        return pyVersion
+
+    searchStr = env.concat('LIBS', 'LIBPATH', 'CPPPATH')
+    match = re.search('python(\d)\.(\d)(?:\.\d)?([a-zA-Z])?', searchStr)
+
+    if not match:
+        return getPyVersionByExec()
+
+    pyVersion = '%s.%s' %(match.group(1), match.group(2))
+
+    return pyVersion + match.group(3) if match.group(3) else pyVersion
+
+SetOption('num_jobs', 4)
 
 variables = Variables(CONFIG_FILE)
 variables.AddVariables(
         ('CXX', 'C++ compiler', Environment()['CXX']),
         ('CXXFLAGS', 'C++ compiler flags'),
-        ('PYVERSION', 'Python version', pyDefaultVersion),
+        ('CPPFLAGS', 'Preprocessor flags, e.g. -I /usr/local/lib/python3.6m'),
+        ('LDFLAGS', 'Linker flags for test executable, e.g. -L /usr/local/lib'),
+        ('LIBS', 'Libraries for the test executable, e.g. -lpython3.6m'),
+        ('PYVERSION', 'Python version to deduce linker and preprocessor flags'),
         BoolVariable('RELEASE', 'Build with  predefined release flags', 1),
         BoolVariable('DEBUG', 'Build with predefined debug flags (overrides RELEASE)', 0),
         BoolVariable('COVERAGE', 'Add compiler flags for test coverage meta data', 0),
         PathVariable('BUILDDIR', 'Directory for compilation targets', DEFAULT_BUILDDIR,
             PathVariable.PathIsDirCreate),
-        PathVariable('PREFIX', 'Installation prefix', DEFAULT_PREFIX, PathVariable.PathIsDirCreate),
-        PathVariable('PYINCLUDE', 'Directory with python headers', '', PathVariable.PathAccept),
-        PathVariable('PYLIBRARY', 'Directory with python library', '', PathVariable.PathAccept))
+        PathVariable('PREFIX', 'Installation prefix', DEFAULT_PREFIX, PathVariable.PathIsDirCreate))
 
 env = Environment(variables = variables)
+env.AddMethod(buildDir)
+env.AddMethod(concat)
 
 if variables.unknown:
     raise Errors.StopError('Variables %s are invalid' % ' '.join(variables.unknown.keys()))
 
-if env['DEBUG']:
-    env['RELEASE'] = False
-
-for key in ('CXX', 'CXXFLAGS'):
+for key in ('CXX', 'CXXFLAGS', 'LDFLAGS', 'LIBS', 'CPPFLAGS'):
     if key in os.environ.keys() and not key in ARGUMENTS.keys():
         env[key] = os.environ.get(key)
 
-# Manual variables must be split into a list (e.g. "-O2 -march=native")
+argsToBeParsed = env.concat('LIBS', 'LDFLAGS', 'CPPFLAGS')
+
+for key in ('LIBS', 'LDFLAGS', 'CPPFLAGS'):
+    if key in env.Dictionary():
+        del env.Dictionary()[key]
+
+env.MergeFlags(argsToBeParsed)
+env['PYVERSION'] = getPyVersion(env)
+
+if env['DEBUG']:
+    env['RELEASE'] = False
+
 if isinstance(env['CXXFLAGS'], str):
     env[key] = env['CXXFLAGS'].split()
 
-pyIncludeDir = env['PYINCLUDE'] or os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
-pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
-
-env.AddMethod(buildDir)
-env.Append(CPPPATH = [pyIncludeDir])
+if 'python' not in env.concat('CPPPATH').lower():
+    pyIncludeDir = os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
+    env.Append(CPPPATH = [pyIncludeDir])
 
 if not env['CXXFLAGS']:
     env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wextra', '-Werror=conversion'])
@@ -124,6 +162,9 @@ if env['RELEASE']:
 libEnv = env.Clone()
 testEnv = env.Clone()
 
+libEnv['LIBS'] = ''
+libEnv['LIBPATH'] = None
+
 libEnv.Replace(BUILDDIR = env.buildDir('src'))
 testEnv.Replace(BUILDDIR = env.buildDir('test'))
 
@@ -133,11 +174,10 @@ buildInfoHeader = libEnv.BuildInfo(libEnv.buildDir('buildinfo.h'), None)
 
 testEnv.VariantDir(testEnv.buildDir(), 'test')
 testEnv.Append(CPPPATH = libEnv.buildDir())
-testEnv.Append(LIBS = ['plic', 'python%s' % env['PYVERSION'], 'CppUTest'])
+if not testEnv.concat('LIBS'):
+    testEnv.Append(LIBS = ['plic', 'python%s' % env['PYVERSION'], 'CppUTest'])
 testEnv.Append(RPATH = env.buildDir())
 testEnv.Append(LIBPATH = env.buildDir())
-if env['PYLIBRARY']:
-    testEnv.Append(LIBPATH = [env['PYLIBRARY']])
 
 libTarget = libEnv.SharedLibrary(env.buildDir(LIBNAME), Glob('build/src/*.cpp'))
 
@@ -181,5 +221,5 @@ Build targets:\n
     'install'        install library, headers and example configuration
     'uninstall'      deinstall library, headers and example configuration
 
-Build options, possibly set in %s, or by environment (compiler and their flags):
+Options set in %s or environment (only CXX, CXXFLAGS, CPPFLAGS, LIBS, LDFLAGS):
 %s""" % (CONFIG_FILE, variables.GenerateHelpText(env)))

@@ -18,11 +18,12 @@ build on all major Linux distributions by
 ```bash
 scons lib
 ```
-Environment variables `CXX` and `CXXFLAGS` are taken into account. clang and gcc have been tested,
-their version must be recent enough to support C++11. The python version is detected by the default
-`python` executable in your $PATH, but can also be specified by passing an appropriate option to
-scons (python 2.7, 3.4m, 3.5m and 3.6m have been tested). To install header files, the shared
-library and some example configuration:
+Standard environment variables `CXX`, `CXXFLAGS`, `LIBS`, `LDFLAGS` and `CPPFLAGS` are taken into
+account, but can be specified as arguments to the scons invocation, too (e.g. `scons CXX=clang++`).
+clang and gcc have been tested, their version must be recent enough to support C++11. If no build
+options are given, the python version is detected by the default `python` executable in your $PATH
+(python 2.7, 3.4m, 3.5m and 3.6m have been tested). To install header files, the shared library and
+some example configuration:
 ```bash
 scons install PREFIX=/usr/local
 ```
