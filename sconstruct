@@ -137,7 +137,7 @@ if env['DEBUG']:
     env['RELEASE'] = False
 
 if isinstance(env['CXXFLAGS'], str):
-    env[key] = env['CXXFLAGS'].split()
+    env['CXXFLAGS'] = env['CXXFLAGS'].split()
 
 if 'python' not in env.concat('CPPPATH').lower():
     pyIncludeDir = os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
