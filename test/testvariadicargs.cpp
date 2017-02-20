@@ -220,3 +220,10 @@ TEST(VariadicArgs, multipleConversionModifier)
 
     CHECK_EQUAL(expected, getLogString());
 }
+
+TEST(VariadicArgs, functionMetaInfoWithText)
+{
+    plic::error("test", plic::FCT, __func__, errorMsg);
+
+    CHECK_EQUAL(errorMsg + "\n", getLogString());
+}
