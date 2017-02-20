@@ -114,6 +114,7 @@ namespace plic {
 
     void disableFormatStrings();
     void enableFormatStrings();
+    void setSeparator(const std::string& sep);
 }
 
 extern "C" {

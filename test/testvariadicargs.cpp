@@ -227,3 +227,15 @@ TEST(VariadicArgs, functionMetaInfoWithText)
 
     CHECK_EQUAL(errorMsg + "\n", getLogString());
 }
+
+TEST(VariadicArgs, metaInfoWithSeparator)
+{
+    const std::string expected(errorMsg + ", 1, 2, 3, " + errorMsg + "\n");
+    plic::setSeparator(", ");
+
+    plic::error("test", errorMsg, plic::FILENAME, __FILE__, 1, 2, 3, plic::LINE, 123, errorMsg);
+
+    plic::setSeparator("");
+
+    CHECK_EQUAL(expected, getLogString());
+}

@@ -66,10 +66,13 @@ int main(int argc, char **argv)
 ```
 The identifier 'example-logger' in the config script and the client code must of course match.
 Available function names for logging are debug/info/warning/error/fatal according to the python log
-levels. When you don't feel comfortable with the type-unsafe format specifier invocation, disable it
-by
+levels. When you don't feel comfortable with the type-unsafe format specifier invocation, you can
+disable it. Another option is to add a separator string to be inserted between logging arguments
+(the default separator is an empty string),
 ```c++
 plic::disableFormatStrings(); /* re-enable it with plic::enableFormatStrings() */
+
+plic::setSeparator(", ");
 ```
 You can pass meta information like filename, line number and function name for later retrieval by an
 appropriate logging formatter, see below.

@@ -73,6 +73,11 @@ void plic::enableFormatStrings()
     Message::setFormatStrings(true);
 }
 
+void plic::setSeparator(const std::string& sep)
+{
+    Message::setSeparator(sep);
+}
+
 void plic_debug(const char *logger, const char *fmt, ...)
 {
     plic::Message msg(plic::DEBUG, logger);

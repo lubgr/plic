@@ -99,3 +99,20 @@ TEST(Message, function)
 
     CHECK_EQUAL(__func__, msg.getFunction());
 }
+
+TEST(Message, separator)
+{
+    const std::string expected("1, 2, three");
+
+    plic::Message msg(plic::DEBUG, logger);
+
+    plic::Message::setSeparator(", ");
+
+    msg.append(1);
+    msg.append(2);
+    msg.append("three");
+
+    plic::Message::setSeparator("");
+
+    CHECK_EQUAL(expected, msg.getText());
+}

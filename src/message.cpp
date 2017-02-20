@@ -10,6 +10,8 @@ namespace {
     bool areFormatStringsEnabled = true;
 }
 
+std::string plic::Message::separator = "";
+
 plic::Message::Message(Level level, const std::string& logger) :
     linenumber(0),
     logger(logger),
@@ -69,7 +71,7 @@ void plic::Message::append(const char *fmt, std::va_list args)
 
     std::vsnprintf(buffer, bufferSize, fmt, argsCopy);
 
-    append(buffer);
+    appendSeparatorAnd(buffer);
 
     delete[] buffer;
 }
@@ -89,7 +91,7 @@ std::ptrdiff_t plic::Message::variadicAppend(const char *fmt, ...)
         append(fmt, args);
         nFmtSpecifier = std::strchr(fmt, '%') == NULL ? 0 : getNumFmtSpecifier(fmt);
     } else {
-        append(fmt);
+        appendSeparatorAnd(fmt);
         nFmtSpecifier = 0;
     }
 
@@ -124,7 +126,7 @@ void plic::Message::append(int number)
     if (next == LINE)
         setMetaInfo(number);
     else
-        stream << number;
+        appendSeparatorAnd(number);
 }
 
 void plic::Message::append(const char *str)
@@ -132,7 +134,7 @@ void plic::Message::append(const char *str)
     if (next == FILENAME || next == FCT)
         setMetaInfo(str);
     else
-        stream << str;
+        appendSeparatorAnd(str);
 }
 
 void plic::Message::append(MetaInfo info)
@@ -164,6 +166,11 @@ void plic::Message::setMetaInfo(const char *str)
 void plic::Message::setFormatStrings(bool value)
 {
     areFormatStringsEnabled = value;
+}
+
+void plic::Message::setSeparator(const std::string& sep)
+{
+    separator = sep;
 }
 
 std::string plic::Message::getText() const
