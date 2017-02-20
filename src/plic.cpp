@@ -41,7 +41,7 @@ plic::Stream plic::critical(const std::string& logger)
 
 void plic::configFile(const std::string& pyConfigFilename)
 {
-    std::FILE *fp = fopen(pyConfigFilename.c_str(), "r");
+    std::FILE *fp = std::fopen(pyConfigFilename.c_str(), "r");
     int returnValue = 1;
 
     if (fp == NULL)
