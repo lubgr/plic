@@ -9,7 +9,7 @@ void plic::log(const Message& msg)
     pyBackend::log(msg);
 }
 
-void plic::shiftArgOrLog(std::ptrdiff_t, const Message& msg)
+void plic::shiftArgOrLog(std::ptrdiff_t&, const Message& msg)
 {
     log(msg);
 }

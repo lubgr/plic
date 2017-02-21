@@ -3,6 +3,7 @@
 
 #ifdef __cplusplus
 
+#include <type_traits>
 #include "stream.h"
 #include "message.h"
 #include "version.h"
@@ -16,7 +17,7 @@ namespace plic {
 
 #if __cplusplus >= 201103L
     void log(const Message& msg);
-    void shiftArgOrLog(std::ptrdiff_t, const Message& msg);
+    void shiftArgOrLog(std::ptrdiff_t&, const Message& msg);
 
     template<class S, class... T> void log(Message& msg, const S& firstArg, const T&... args)
     {
@@ -25,14 +26,32 @@ namespace plic {
         log(msg, args...);
     }
 
+    template<class T> typename
+        std::enable_if<std::is_trivial<T>::value, const T&>::type pass(const T& arg)
+    {
+        return arg;
+    }
+
+    template<class T> typename
+        std::enable_if<!std::is_trivial<T>::value, std::nullptr_t>::type pass(const T&)
+    {
+        return nullptr;
+    }
+
     template<class... T> void log(Message& msg, const char *fmt, const T&... args)
     {
-        std::ptrdiff_t n = msg.variadicAppend(fmt, args...);
+        /* Forwarding the plain argument pack to the variadic Message method does not compile with
+         * clang and is only conditionally implemented in g++, because macro-based variadic function
+         * calls for non-trivial argument types are "conditionally-supported with
+         * implementation-defined semantics" (C++11, §5.2.2/7). It's possible though to turn
+         * non-trivial arguments into null-pointer, which can't discard information because there
+         * are no format specifier for non-trivial types and such a call would be illegal anyhow. */
+        std::ptrdiff_t n = msg.variadicAppend(fmt, pass(args)...);
 
         shiftArgOrLog(n, msg, args...);
     }
 
-    template<class S, class... T> void shiftArgOrLog(std::ptrdiff_t nLeft, Message& msg,
+    template<class S, class... T> void shiftArgOrLog(std::ptrdiff_t& nLeft, Message& msg,
             const S& firstArg, const T&... args)
     {
         if (nLeft > 0)
