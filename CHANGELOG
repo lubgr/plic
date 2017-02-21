@@ -1,0 +1,17 @@
+v.02
+
+* API change: printf-format strings can be passed to the variadic template functions arbitrarily
+  often. The format specifier are counted using a regex, if arguments are left, the recursive calls
+  restart, beginning either with a new string literal (which can be a format strings, doesn't have
+  to be) or with an arbitrary object with std::ostream << operator.
+* Indicate meta information with a dedicated enum and then pass __FILE__, __LINE__ and __func__.
+* Use CPPFLAGS, LIBS and LDFLAGS (environment or cmd-line specification) in the build process for
+* an autotools-close behavior.
+* Two exemplary configuration files distributed together with the source.
+* Fix memory leak bugs, failing test cases for older python versions, minor fixes.
+* Override the python SIGINT handler to prevent memory leaks.
+
+v.01
+
+* Basic setup of logging via streams and printf-like format strings with variable arguments.
+  Configuration via python strings or streams, little documentation in a README.

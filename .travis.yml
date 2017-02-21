@@ -3,10 +3,6 @@ language: cpp
 dist: trusty
 sudo: required
 
-branches:
-  only:
-    - develop
-
 git:
     depth: 3
 
