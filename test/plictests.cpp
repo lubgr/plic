@@ -1,6 +1,7 @@
 
 #include <Python.h>
 #include <cassert>
+#include <fstream>
 #include "pybackend.h"
 #include "plictests.h"
 
@@ -13,7 +14,17 @@ const std::string criticalMsg("Critical message");
 static PyObject *testHandler(NULL);
 static PyObject *stream(NULL);
 
+static bool needsInitialization = true;
+
 namespace {
+    void initializeTestSetup()
+    {
+        /* This will initialize the python interpreter and configure logging to its default: */
+        plic::configStr("");
+
+        needsInitialization = false;
+    }
+
     void initTestLogging()
     {
         PyObject *logging(PyImport_ImportModule("logging"));
@@ -33,6 +44,9 @@ namespace {
 
 void setupLogStream()
 {
+    if (needsInitialization)
+        initializeTestSetup();
+
     const char *moduleName = PY_MAJOR_VERSION > 2 ? "io" : "StringIO";
     PyObject *io(PyImport_ImportModule(moduleName));
 
@@ -50,30 +64,32 @@ void setupLogStream()
 
 std::string getLogString()
 {
+    std::string logString;
     PyObject *retValue;
     PyObject *string;
     char *msg;
 
     retValue = PyObject_CallMethod(testHandler, "flush", NULL);
-
-    Py_DECREF(retValue);
-
     string = PyObject_CallMethod(stream, "getvalue", NULL);
 
 #if PY_MAJOR_VERSION > 2
-    PyObject* encoded = PyUnicode_AsUTF8String(string);
+    PyObject *encoded = PyUnicode_AsUTF8String(string);
 
     msg = PyBytes_AsString(encoded);
-
-    Py_DECREF(encoded);
 #else
     msg = PyString_AsString(string);
+#endif
+
+    logString = std::string(msg);
+
+#if PY_MAJOR_VERSION > 2
+    Py_DECREF(encoded);
 #endif
 
     Py_DECREF(retValue);
     Py_DECREF(string);
 
-    return std::string(msg);
+    return logString;
 }
 
 void cleanUpLogStream()
@@ -91,11 +107,20 @@ void cleanUpLogStream()
     retValue = PyObject_CallMethod(testLogger, "removeHandler", "(O)", testHandler);
 
     Py_DECREF(stream);
-    Py_DECREF(testHandler);
     Py_DECREF(testLogger);
     Py_DECREF(logging);
     Py_DECREF(retValue);
 
     testHandler= NULL;
     stream = NULL;
+}
+
+std::string getContent(const std::string& filename)
+{
+    std::ifstream stream(filename);
+    std::stringstream buffer;
+
+    buffer << stream.rdbuf();
+
+    return buffer.str();
 }

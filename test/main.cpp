@@ -1,12 +1,15 @@
 
-#include <CppUTest/CommandLineTestRunner.h>
 #include "plic.h"
+#include <CppUTest/CommandLineTestRunner.h>
+
+void initConstructOnFirstUse()
+{
+    plic::debug("", "no real %% format specifier ", 0);
+}
 
 int main(int argc, char **argv)
 {
-    const int retValue = CommandLineTestRunner::RunAllTests(argc, argv);
+    initConstructOnFirstUse();
 
-    plic::finalize();
-
-    return retValue;
+    return CommandLineTestRunner::RunAllTests(argc, argv);
 }

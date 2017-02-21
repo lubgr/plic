@@ -1,48 +1,17 @@
 
-#include <cstdarg>
-#include <cstdio>
+#include <regex>
 #include <iostream>
 #include "plic.h"
 #include "pybackend.h"
 
-/* Save some typing of the va_start/va_end in functions with C-style variable arguments: */
-#define logWithValist(level)\
-    std::va_list argptr;\
-    va_start(argptr, fmt);\
-    log(level, logger, fmt, argptr);\
-    va_end(argptr);
+void plic::log(const Message& msg)
+{
+    pyBackend::log(msg);
+}
 
-namespace {
-    std::string format(const char *fmt, std::va_list args)
-    {
-        std::va_list argsCopy;
-        std::string result;
-        int bufferSize;
-        char *buffer;
-
-        va_copy(argsCopy, args);
-
-        bufferSize = std::vsnprintf(NULL, 0, fmt, args) + 1;
-        buffer = new char[bufferSize];
-
-        std::vsnprintf(buffer, bufferSize, fmt, argsCopy);
-
-        result = std::string(buffer);
-
-        delete[] buffer;
-
-        return result;
-    }
-
-    std::string format(const std::string& fmt, std::va_list args)
-    {
-        return format(fmt.c_str(), args);
-    }
-
-    void log(plic::Level level, const std::string& logger, const std::string& fmt, std::va_list arg)
-    {
-        plic::pyBackend::log(level, logger, format(fmt, arg));
-    }
+void plic::shiftArgOrLog(std::ptrdiff_t&, const Message& msg)
+{
+    log(msg);
 }
 
 plic::Stream plic::debug(const std::string& logger)
@@ -70,34 +39,9 @@ plic::Stream plic::critical(const std::string& logger)
     return Stream(CRITICAL, logger);
 }
 
-void plic::debug(const std::string& logger, const std::string& fmt, ...)
-{
-    logWithValist(DEBUG);
-}
-
-void plic::info(const std::string& logger, const std::string& fmt, ...)
-{
-    logWithValist(INFO);
-}
-
-void plic::warning(const std::string& logger, const std::string& fmt, ...)
-{
-    logWithValist(WARNING);
-}
-
-void plic::error(const std::string& logger, const std::string& fmt, ...)
-{
-    logWithValist(ERROR);
-}
-
-void plic::critical(const std::string& logger, const std::string& fmt, ...)
-{
-    logWithValist(CRITICAL);
-}
-
 void plic::configFile(const std::string& pyConfigFilename)
 {
-    FILE *fp = fopen(pyConfigFilename.c_str(), "r");
+    std::FILE *fp = std::fopen(pyConfigFilename.c_str(), "r");
     int returnValue = 1;
 
     if (fp == NULL)
@@ -119,34 +63,84 @@ void plic::configStr(const std::string& pyCommands)
         std::cerr << "Configuration by python string failed" << std::endl;
 }
 
-void plic::finalize()
+void plic::disableFormatStrings()
 {
-    pyBackend::finalize();
+    Message::setFormatStrings(false);
+}
+
+void plic::enableFormatStrings()
+{
+    Message::setFormatStrings(true);
+}
+
+void plic::setSeparator(const std::string& sep)
+{
+    Message::setSeparator(sep);
 }
 
 void plic_debug(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::DEBUG);
+    plic::Message msg(plic::DEBUG, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_info(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::INFO);
+    plic::Message msg(plic::INFO, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_warning(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::WARNING);
+    plic::Message msg(plic::WARNING, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_error(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::ERROR);
+    plic::Message msg(plic::ERROR, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_critical(const char *logger, const char *fmt, ...)
 {
-    logWithValist(plic::CRITICAL);
+    plic::Message msg(plic::CRITICAL, logger);
+    std::va_list args;
+    va_start(args, fmt);
+
+    msg.append(fmt, args);
+
+    va_end(args);
+
+    plic::log(msg);
 }
 
 void plic_configFile(const char *pyConfigFilename)
@@ -157,9 +151,4 @@ void plic_configFile(const char *pyConfigFilename)
 void plic_configStr(const char *pyCommands)
 {
     plic::configStr(pyCommands);
-}
-
-void plic_finalize()
-{
-    plic::finalize();
 }

@@ -1,7 +1,6 @@
 
 #include <Python.h>
 #include <cstdio>
-#include <fstream>
 #include "plictests.h"
 
 TEST_GROUP(Config)
@@ -10,20 +9,7 @@ TEST_GROUP(Config)
     {
         /* Remove all log files generated in ./misc/output: */
         PyRun_SimpleString("import os;import glob;\
-                [os.remove(logFile) for logFile in glob.glob('misc/output' + '/*.log')]");
-
-        PyRun_SimpleString("import logging;logging.getLogger('test').handlers = []");
-        PyRun_SimpleString("import logging;logging.getLogger('test').setLevel(logging.DEBUG)");
-    }
-
-    std::string getContent(const std::string& filename)
-    {
-        std::ifstream stream(filename);
-        std::stringstream buffer;
-
-        buffer << stream.rdbuf();
-
-        return buffer.str();
+                [os.remove(logFile) for logFile in glob.glob('misc/output/*.log')]");
     }
 
     bool doesFileExist(const char *filename)
@@ -39,15 +25,16 @@ TEST_GROUP(Config)
     }
 };
 
-TEST(Config, config01SimpelString)
+TEST(Config, config01SimpleString)
 {
-    const std::string expected("DEBUG:test:" + debugMsg + "\n" + "INFO:test:" + infoMsg + "\n");
+    const std::string expected("DEBUG:root:" + debugMsg + "\n" + "INFO:root:" + infoMsg + "\n");
     plic::configStr("import logging;\
         logging.getLogger().handlers = [];\
         logging.basicConfig(filename = 'misc/output/test01.log', level = logging.DEBUG)");
 
-    plic::debug("test") << debugMsg;
-    plic::info("test") << infoMsg;
+    /* logging.basicConfig() configures the root logger, so don't log to the 'test' logger: */
+    plic::debug("") << debugMsg;
+    plic::info("") << infoMsg;
 
     CHECK_EQUAL(expected, getContent("misc/output/test01.log"));
 }
@@ -85,7 +72,12 @@ TEST(Config, config03Utf8ConfigFile)
 
 TEST(Config, config04Latin1ConfigFile)
 {
+#if PY_MAJOR_VERSION > 2
+    /* Everything is converted to a unicode representation in python3. */
     const std::string logger("test.test-äüöß");
+#else
+    const std::string logger("test.test-\xe4\xfc\xf6\xdf");
+#endif
     const std::string nonAsciiMsg("Error msg. with ä, ö, ü, ß");
     const std::string expected(logger + " : " + nonAsciiMsg + "\n");
 
@@ -102,20 +94,32 @@ TEST(Config, config05FileWithSyntaxError)
 
     plic::configFile("test/config05.py");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 
     cleanUpLogStream();
 }
 
-TEST(Config, config06StringWithSyntaxError)
+TEST(Config, config06MetaInformation)
+{
+    const std::string expected("12345: " + debugMsg + "\n");
+    const char *outputFilename = "misc/output/test06.log";
+
+    plic::configFile("test/config06.py");
+
+    plic::debug("test", plic::LINE, 12345, debugMsg);
+
+    CHECK_EQUAL(expected, getContent(outputFilename));
+}
+
+TEST(Config, config07StringWithSyntaxError)
 {
     setupLogStream();
 
     plic::configStr("&&& intended invalid syntax");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 
@@ -128,7 +132,7 @@ TEST(Config, nonExistingFile)
 
     plic::configFile("test/nonexisting.py");
 
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 

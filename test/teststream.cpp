@@ -1,70 +1,57 @@
 
 #include "plictests.h"
 
-TEST_GROUP(Stream)
-{
-    const char *logger = "test";
-};
+TEST_GROUP(Stream) {};
 
-TEST(Stream, emptyDefaultStream)
+TEST(Stream, ignoreLineNumber)
 {
-    const plic::Stream stream(plic::INFO, logger);
+    const int linenumber = 1234;
+    plic::Stream stream(plic::DEBUG, "logger");
 
-    CHECK(stream.getStream().str().empty());
+    stream << plic::LINE << linenumber;
+
+    CHECK_EQUAL(linenumber, stream.getMessage().getLineNumber());
+    CHECK(stream.getMessage().getText().empty());
 }
 
-TEST(Stream, emptyLoggerName)
+TEST(Stream, ignoreFilename)
 {
-    const plic::Stream stream(plic::INFO, "");
+    plic::Stream stream(plic::DEBUG, "logger");
 
-    CHECK(stream.getLoggerName().empty());
+    stream << plic::FILENAME << __FILE__ << "some text";
+
+    CHECK_EQUAL(__FILE__, stream.getMessage().getFilename());
+    CHECK_EQUAL("some text", stream.getMessage().getText());
 }
 
-TEST(Stream, getLoggerNameAndLevel)
+TEST(Stream, ignoreFunction)
 {
-    const plic::Stream stream(plic::DEBUG, logger);
+    plic::Stream stream(plic::DEBUG, "logger");
 
-    CHECK_EQUAL(plic::DEBUG, stream.getLevel());
-    CHECK_EQUAL(logger, stream.getLoggerName());
+    stream << plic::FCT << __func__;
+
+    CHECK_EQUAL(__func__, stream.getMessage().getFunction());
+    CHECK(stream.getMessage().getText().empty());
 }
 
-TEST(Stream, copyConstruct)
+TEST(Stream, ignoreFmtSpecifier)
 {
-    plic::Stream from(plic::CRITICAL, logger);
-    plic::Stream *to;
+    plic::Stream stream(plic::DEBUG, "logger");
 
-    from << criticalMsg;
+    stream << "%d " << -100;
 
-    to = new plic::Stream(from);
-
-    CHECK_EQUAL(plic::CRITICAL, to->getLevel());
-    CHECK_EQUAL(logger, to->getLoggerName());
-    CHECK_EQUAL(criticalMsg, to->getStream().str());
-
-    delete to;
+    CHECK_EQUAL("%d -100", stream.getMessage().getText());
 }
 
-TEST(Stream, assignmentOperator)
+TEST(Stream, ignoreExplicitFmtSpecifier)
 {
-    const std::string diffLogger("differentLoggerName");
-    plic::Stream from(plic::WARNING, diffLogger);
-    plic::Stream to(plic::DEBUG, logger);
+    plic::Stream stream(plic::DEBUG, "logger");
 
-    from << warningMsg;
+    plic::disableFormatStrings();
 
-    to = from;
+    stream << plic::FMT << "%d " << 1234;
 
-    CHECK_EQUAL(plic::WARNING, to.getLevel());
-    CHECK_EQUAL(diffLogger, to.getLoggerName());
-    CHECK_EQUAL(warningMsg, to.getStream().str());
-}
+    CHECK_EQUAL("%d 1234", stream.getMessage().getText());
 
-TEST(Stream, selfAssignment)
-{
-    plic::Stream stream(plic::ERROR, logger);
-
-    stream = stream;
-
-    CHECK_EQUAL(plic::ERROR, stream.getLevel());
-    CHECK_EQUAL(logger, stream.getLoggerName());
+    plic::enableFormatStrings();
 }

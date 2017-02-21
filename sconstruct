@@ -10,7 +10,7 @@ LIBNAME = 'lib%s' % NAME
 DEFAULT_PREFIX = '/usr/local'
 DEFAULT_BUILDDIR = './build'
 TEST_EXEC = 'runtests'
-PUBLIC_HEADER = ['plic', 'level', 'stream', 'buildinfo']
+PUBLIC_HEADER = ['plic', 'level', 'stream', 'message', 'metainfo', 'buildinfo', 'version']
 CONFIG_FILE = 'config.py'
 
 def publicHeaderList():
@@ -63,65 +63,107 @@ def writeBuildInfoHeader(target, source, env):
 def buildDir(self, *paths):
     return os.path.join(self['BUILDDIR'], *paths)
 
-def libExistance(target, source, env):
-    filename = str(env['LIBTARGET'][0])
-    if not os.path.isfile(filename):
-        raise Errors.StopError('%s not found. Compile it before tests or installation.' % filename)
+def concat(self, *keys):
+    strRep = ''
+
+    for key in keys:
+        if key in self.Dictionary():
+            entry = self[key]
+            if isinstance(entry, list):
+                entry = ' '.join(entry)
+
+            strRep += '%s ' % entry
+
+    return strRep[:-1]
+
+def getPyVersionByExec():
+    pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
+            + '(sys.version_info.major, sys.version_info.minor, getattr(sys, "abiflags", "")))'
+    return subprocess.check_output(['python', '-c', pyVersionCmd])
+
+def getPyVersion(env):
+    pyVersion = env.concat('PYVERSION')
+    if pyVersion:
+        return pyVersion
+
+    searchStr = env.concat('LIBS', 'LIBPATH', 'CPPPATH')
+    match = re.search('python(\d)\.(\d)(?:\.\d)?([a-zA-Z])?', searchStr)
+
+    if not match:
+        return getPyVersionByExec()
+
+    pyVersion = '%s.%s' %(match.group(1), match.group(2))
+
+    return pyVersion + match.group(3) if match.group(3) else pyVersion
 
 SetOption('num_jobs', 4)
-
-pyVersionCmd = 'import sys;sys.stdout.write("%d.%d%s" % ' \
-        + '(sys.version_info.major, sys.version_info.minor, getattr(sys, "abiflags", "")))'
-pyDefaultVersion = subprocess.check_output(['python', '-c', pyVersionCmd])
 
 variables = Variables(CONFIG_FILE)
 variables.AddVariables(
         ('CXX', 'C++ compiler', Environment()['CXX']),
         ('CXXFLAGS', 'C++ compiler flags'),
-        ('PYVERSION', 'Python version', pyDefaultVersion),
+        ('CPPFLAGS', 'Preprocessor flags, e.g. -I /usr/local/lib/python3.6m'),
+        ('LDFLAGS', 'Linker flags for test executable, e.g. -L /usr/local/lib'),
+        ('LIBS', 'Libraries for the test executable, e.g. -lpython3.6m'),
+        ('PYVERSION', 'Python version to deduce linker and preprocessor flags'),
         BoolVariable('RELEASE', 'Build with  predefined release flags', 1),
         BoolVariable('DEBUG', 'Build with predefined debug flags (overrides RELEASE)', 0),
         BoolVariable('COVERAGE', 'Add compiler flags for test coverage meta data', 0),
         PathVariable('BUILDDIR', 'Directory for compilation targets', DEFAULT_BUILDDIR,
             PathVariable.PathIsDirCreate),
-        PathVariable('PREFIX', 'Installation prefix', DEFAULT_PREFIX, PathVariable.PathIsDirCreate),
-        PathVariable('PYINCLUDE', 'Directory with python headers', '', PathVariable.PathAccept),
-        PathVariable('PYLIBRARY', 'Directory with python library', '', PathVariable.PathAccept))
+        PathVariable('PREFIX', 'Installation prefix', DEFAULT_PREFIX, PathVariable.PathIsDirCreate))
 
 env = Environment(variables = variables)
+env.AddMethod(buildDir)
+env.AddMethod(concat)
 
 if variables.unknown:
     raise Errors.StopError('Variables %s are invalid' % ' '.join(variables.unknown.keys()))
 
-if env['DEBUG']:
-    env['RELEASE'] = False
-
-for key in ('CC', 'CXX', 'CFLAGS', 'CXXFLAGS'):
+for key in ('CXX', 'CXXFLAGS', 'LDFLAGS', 'LIBS', 'CPPFLAGS'):
     if key in os.environ.keys() and not key in ARGUMENTS.keys():
         env[key] = os.environ.get(key)
 
-pyIncludeDir = env['PYINCLUDE'] or os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
-pyLib = os.path.join('/usr', 'lib', 'libpython%s.so' % env['PYVERSION'])
+argsToBeParsed = env.concat('LIBS', 'LDFLAGS', 'CPPFLAGS')
 
-env.AddMethod(buildDir)
-env.Append(CPPPATH = [pyIncludeDir])
-env.Append(CXXFLAGS = ['-Wall', '-Wextra', '-Werror=conversion'])
+for key in ('LIBS', 'LDFLAGS', 'CPPFLAGS'):
+    if key in env.Dictionary():
+        del env.Dictionary()[key]
 
-if env['PYVERSION'].startswith('2'):
-    env.Append(CXXFLAGS = ['-Wno-write-strings'])
+env.MergeFlags(argsToBeParsed)
+env['PYVERSION'] = getPyVersion(env)
 
-if env['RELEASE']:
-    env.Append(CPPDEFINES = 'NDEBUG')
+if env['DEBUG']:
+    env['RELEASE'] = False
+
+if isinstance(env['CXXFLAGS'], str):
+    env['CXXFLAGS'] = env['CXXFLAGS'].split()
+
+if not env.concat('CPPPATH'):
+    pyIncludeDir = os.path.join('/usr', 'include', 'python%s' % env['PYVERSION'])
+    env.Append(CPPPATH = [pyIncludeDir])
 
 if not env['CXXFLAGS']:
-    env.Append(CXXFLAGS = ['-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror=conversion'])
+    env.Append(CXXFLAGS = ['-std=c++11', '-Wall', '-Wextra', '-Werror=conversion'])
+
+    if env['PYVERSION'].startswith('2'):
+        env.Append(CXXFLAGS = ['-Wno-write-strings'])
+    else:
+        env.Append(CXXFLAGS = ['-pedantic'])
+
     if env['RELEASE']:
         env.Append(CXXFLAGS = '-O2')
     elif env['DEBUG']:
         env.Append(CXXFLAGS = ['-O0', '-g3', '-ggdb'])
 
+if env['RELEASE']:
+    env.Append(CPPDEFINES = 'NDEBUG')
+
 libEnv = env.Clone()
 testEnv = env.Clone()
+
+libEnv['LIBS'] = ''
+libEnv['LIBPATH'] = None
 
 libEnv.Replace(BUILDDIR = env.buildDir('src'))
 testEnv.Replace(BUILDDIR = env.buildDir('test'))
@@ -132,11 +174,10 @@ buildInfoHeader = libEnv.BuildInfo(libEnv.buildDir('buildinfo.h'), None)
 
 testEnv.VariantDir(testEnv.buildDir(), 'test')
 testEnv.Append(CPPPATH = libEnv.buildDir())
-testEnv.Append(LIBS = ['plic', 'python%s' % env['PYVERSION'], 'CppUTest'])
+if not testEnv.concat('LIBS'):
+    testEnv.Append(LIBS = ['plic', 'python%s' % env['PYVERSION'], 'CppUTest'])
 testEnv.Append(RPATH = env.buildDir())
 testEnv.Append(LIBPATH = env.buildDir())
-if env['PYLIBRARY']:
-    testEnv.Append(LIBPATH = [env['PYLIBRARY']])
 
 libTarget = libEnv.SharedLibrary(env.buildDir(LIBNAME), Glob('build/src/*.cpp'))
 
@@ -147,24 +188,20 @@ if libEnv['COVERAGE']:
 
 testTarget = testEnv.Program(env.buildDir(TEST_EXEC), Glob(testEnv.buildDir('*.cpp')))
 
-# The following lines ensures that library and tests can be built with different CXXFLAGS. Due to
-# the hard-coded removal of the dependency, its local existance has to be checked, otherwise the
-# test executable might be linked against a globally installed version of the library.
-testEnv.Append(LIBTARGET = libTarget)
-testEnv.Ignore(testTarget, testEnv['LIBTARGET'])
-testEnv.AddPreAction(testTarget, libExistance)
-
 includeDir = os.path.join(env['PREFIX'], 'include')
 headerTargetDir = os.path.join(includeDir, NAME)
 libDir = os.path.join(env['PREFIX'], 'lib')
+shareDir = os.path.join(env['PREFIX'], 'share')
 libPath = os.path.join(libDir, LIBNAME + Environment().subst('$SHLIBSUFFIX'))
+exampleTargetDir = os.path.join(shareDir, NAME)
 
 installLib = libEnv.InstallAs(libPath, libTarget)
 installHeader = libEnv.Install(headerTargetDir, publicHeaderList())
+installExampleConfig = libEnv.Install(exampleTargetDir, Glob('misc/example/*.py'))
 
-for target in installHeader:
+for target in [installHeader, installExampleConfig]:
     libEnv.AddPostAction(target, Chmod('$TARGET', 0644))
-for target in [headerTargetDir, libDir, includeDir, installLib]:
+for target in [headerTargetDir, libDir, includeDir, shareDir, installLib, exampleTargetDir]:
     libEnv.AddPostAction(target, Chmod('$TARGET', 0755))
 
 uninstall = libEnv.Command('uninstall', None, Delete(FindInstalledFiles()))
@@ -174,15 +211,15 @@ Default([libTarget, testTarget, buildInfoHeader])
 AlwaysBuild(buildInfoHeader)
 Alias('lib', [libTarget, buildInfoHeader])
 Alias('test', testTarget)
-Alias('install', [installHeader, installLib])
+Alias('install', [installHeader, installLib, installExampleConfig])
 
 Help("""
 Build targets:\n
     [none]           shared library and unit tests
     'lib'            shared library only
     'test'           unit tests only
-    'install'        install library and headers
-    'uninstall'      deinstall library and headers
+    'install'        install library, headers and example configuration
+    'uninstall'      deinstall library, headers and example configuration
 
-Build options, possibly set in %s, or by environment (compiler and their flags):
-%s""" % (CONFIG_FILE, variables.GenerateHelpText(env)), append = False)
+Options set in %s or environment (only CXX, CXXFLAGS, CPPFLAGS, LIBS, LDFLAGS):
+%s""" % (CONFIG_FILE, variables.GenerateHelpText(env)))

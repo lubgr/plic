@@ -28,7 +28,7 @@ for file in {test,src}/{*.h,*.cpp}; do
         printf $formatstr "$file +$line" "empty line before end of block"
     done
 
-    for line in `gawk '/^ *[^ /*][^"]*  +[^ ]/ {print NR}' $file`; do
+    for line in `gawk '/^ *[^ /*"][^"]*  +[^ ]/ {print NR}' $file`; do
         printf $formatstr "$file +$line" "multiple spaces between tokens"
     done
 

@@ -16,7 +16,7 @@ TEST_GROUP(Defaults)
 
 TEST(Defaults, emptyDefaultLogger)
 {
-    plic::critical() << criticalMsg;
+    plic::critical("") << criticalMsg;
 
     CHECK(getLogString().empty());
 }
