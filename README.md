@@ -3,10 +3,10 @@
 
 This library provides a convenient way to use the [python logging
 module](https://docs.python.org/3/library/logging.html) from C or C++ applications. Logging can be
-configured with a short python script or string, and a fancy mix of printf-format strings with
-variadic template parameters or streams can be used from client code. As all logging functionality
-is forwarded to the CPython implementation, the core of this library is small. The simplistic
-macro-free API with, the power of the python logging module and python itself probably being already
+configured with a short python script or string, and a mix of printf-format strings with variadic
+template parameters or streams can be used from client code. As all logging functionality is
+forwarded to the CPython implementation, the core of this library is small. The simplistic
+macro-free API with the power of the python logging module and python itself probably being already
 installed on your system may be a reason to use it.
 
 Installation
@@ -121,7 +121,7 @@ As use and implementation of macros like this are a matter of taste, such shortc
 by plic, you'll have to define them by your own.
 
 Additional notes
--------------
+----------------
 * By default, logging is disabled, you have to explicitly enable it (see [here]
   (https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library) for a reasoning).
 * Two example configuration files for printing messages to stdout and for logging to a file are
